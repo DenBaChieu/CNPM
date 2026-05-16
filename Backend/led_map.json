@@ -1,0 +1,58 @@
+{
+  "led_boards": [
+    {
+      "ledID": "BOARD_MAIN_GATE",
+      "locationNode": "Cổng Chính (Vào)",
+      "x": 50,
+      "y": 85,
+      "routes": [
+        {
+          "arrow": "STRAIGHT",
+          "target_children": ["BOARD_JUNCTION_1"]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_JUNCTION_1",
+      "locationNode": "Ngã rẽ Trung Tâm",
+      "x": 50,
+      "y": 60,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_children": ["BOARD_CS1_LEAF"]
+        },
+        {
+          "arrow": "RIGHT",
+          "target_children": ["BOARD_CS2_LEAF"]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_CS1_LEAF",
+      "locationNode": "Lối vào CS1",
+      "x": 25,
+      "y": 35,
+      "routes": [
+        {
+          "arrow": "STRAIGHT",
+          "target_zones": ["CS1"],
+          "target_slots": [] 
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_CS2_LEAF",
+      "locationNode": "Lối vào CS2",
+      "x": 75,
+      "y": 35,
+      "routes": [
+        {
+          "arrow": "STRAIGHT",
+          "target_zones": ["CS2"],
+          "target_slots": []
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,8 @@ from User import User
 from Vehicle import Vehicle
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
+from LEDBoard import LEDBoard
+from GuidanceEngine import GuidanceEngine
 import uvicorn
 
 app = FastAPI()
@@ -38,6 +40,10 @@ for zoneName in ["CS1", "CS2"]:
     parkingManager.managedZones.append(zone)
 
 print("Parking zones and slots initialized")
+
+# _ Initialize Guidance Engine and load the visual map
+guidanceEngine = GuidanceEngine(parking_manager=parkingManager)
+guidanceEngine.load_map("led_map.json")
 
 #---------- Authentication ----------#
 @app.post("/login")
@@ -111,6 +117,13 @@ def GetAvailableSlots(zoneId: str):
         return {"availableSlots": [slot.slotId for slot in availableSlots]}
     else:
         return {"message": "Parking zone not found"}, 404
+    
+# _ Guidance Engine (UC04)
+@app.get("/guidance/status")
+def GetGuidanceStatus():
+    # Calculates routing in real-time based on the JSON map and current slot status
+    status_report = guidanceEngine.calculateRouting()
+    return {"led_boards": status_report}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
