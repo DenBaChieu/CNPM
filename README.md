@@ -10,6 +10,15 @@ Tối thiểu phải có những thứ này cài sẵn:
 Nếu trong quá trình chạy mà có bị báo lỗi thiếu thư viện của python thì chỉ cần dùng "pip install <tên thư viện>".<br>
 Nếu trong quá trình chạy Frontend mà bị báo lỗi thiếu thư viện gì thì chỉ cần dùng "npm install <tên thư viện>".
 
+## Thư viện cần
+
+Python:
+
+- apscheduler
+- fastapi
+- pydantic
+- uvicorn
+
 ## Frontend Setup
 
 1. Tạo 1 terminal mới.
@@ -28,3 +37,6 @@ Nếu trong quá trình chạy Frontend mà bị báo lỗi thiếu thư viện 
 - File main.py là nơi tạo ra những Sensor, ParkingSlot, ParkingZone,... và những dữ liệu này được cho trước trong file và không thay đổi được trừ khi khởi động lại server.
 - Để tắt server thì chỉ cần ấn CTRL + C, tương tự cho Frontend.
 - Frontend sử dụng Vite + React + Tailwind
+- Tài khoản admin dùng để kiểm thử:
+    - id: 0
+    - password: Admin

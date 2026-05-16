@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from AuthManager import *
+from BillingManager import *
 from ParkingManager import ParkingManager
 from ParkingZone import ParkingZone
 from LogManager import LogManager
-from User import User
+from ParkingSession import SetupParkingSessionDB
+from User import *
 from Vehicle import Vehicle
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
@@ -19,6 +21,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+billingManager = BillingManager()
+SetupAuthSystem()
+SetupUserSystem()
+SetupParkingSessionDB()
+SetupBillingDB(billingManager)
+try:
+    CreateAccount(0, "Admin", "Admin", "", "")
+except Exception as e:
+    print("Admin account already exists")
+
+try:
+    SignUp(LoginData(id=0, password="Admin"))
+except Exception as e:
+    print("Admin login already exists")
 
 #Create parking zones and slots
 parkingManager = ParkingManager()
@@ -43,16 +60,14 @@ print("Parking zones and slots initialized")
 @app.post("/login")
 def Login(data: LoginData):
     user = AuthenticateUser(data)
-    if user:
-        token = CreateUserSession(user.userId)
+    if user is not None:
+        token = CreateUserSession(user)
         return {"message": "Login successful", "role": user.role, "token": token}
     else:
-        return {"message": "Invalid credentials"}, 401
-    
-@app.post("/signup")
-def SignUp(data: LoginData):
-    if SignUp(data):
-        return {"message": "Signup successful"}
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
+        )
     
 @app.post("/logout")
 def Logout(sessionId: str):
@@ -60,7 +75,7 @@ def Logout(sessionId: str):
         TerminateUserSession(sessionId)
         return {"message": "Logout successful"}
     else:
-        return {"message": "Invalid session"}, 401
+        raise HTTPException(status_code=401, detail="Invalid session")
     
 @app.get("/validateSession")
 def ValidateUserSession(authorization: str = Header(None)):
@@ -111,6 +126,29 @@ def GetAvailableSlots(zoneId: str):
         return {"availableSlots": [slot.slotId for slot in availableSlots]}
     else:
         return {"message": "Parking zone not found"}, 404
+
+#---------- Admin ----------#
+@app.post("/createaccount")
+def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "CreateAccount"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    CreateAccount(
+        userId=data.userId,
+        fullName=data.fullName,
+        role=data.role,
+        email=data.email,
+        phoneNumber=data.phoneNumber
+    )
+
+    SignUp(
+        LoginData(
+            id=data.userId,
+            password=data.password
+        )
+    )
+
+    return {"message": "Signup successful"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
