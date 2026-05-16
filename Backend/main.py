@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 from AuthManager import *
 from BillingManager import *
 from ParkingManager import ParkingManager
@@ -10,6 +12,9 @@ from User import *
 from Vehicle import Vehicle
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
+from TemporaryTicket import TemporaryTicket
+from BarrierService import BarrierService
+
 import uvicorn
 
 app = FastAPI()
@@ -39,6 +44,15 @@ except Exception as e:
 
 #Create parking zones and slots
 parkingManager = ParkingManager()
+barrierService = BarrierService()
+
+
+class TempTicketRequest(BaseModel):
+    zoneId: str
+    licensePlate: str
+    vehicleType: str = "Unknown"
+    gateId: str = "Gate-1"
+
 parkingSlots = []
 parkingSensors = []
 for zoneName in ["CS1", "CS2"]:
@@ -152,3 +166,56 @@ def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+#---------- TemporaryTicket ----------#
+@app.post("/visitor/requestTempTicket")
+def RequestTempTicket(data: TempTicketRequest):
+    zone = next((z for z in parkingManager.managedZones if z.zoneId == data.zoneId), None)
+    if not zone:
+        raise HTTPException(status_code=404, detail="Parking zone not found")
+
+    available_slots = zone.GetAvailableSlots()
+    if not available_slots:
+        raise HTTPException(status_code=400, detail="No available slots in this zone")
+
+    matched_slot = next(
+        (slot for slot in available_slots if slot.slotType.lower() == data.vehicleType.lower()),
+        None
+    )
+    selected_slot = matched_slot if matched_slot else available_slots[0]
+
+    vehicle = next((v for v in parkingManager.vehicles if v.licensePlate == data.licensePlate), None)
+    if not vehicle:
+        vehicle = parkingManager.RegisterVehicle(
+            vehicleId="",
+            licensePlate=data.licensePlate,
+            vehicleType=data.vehicleType,
+            ownerId="VISITOR",
+        )
+
+    ticket = TemporaryTicket(
+        ticketId=f"T{len(parkingManager.activeSessions) + len(parkingManager.vehicles)}",
+        licensePlate=data.licensePlate,
+        zoneId=zone.zoneId,
+        gateId=data.gateId,
+    )
+
+    barrier_opened = barrierService.openBarrier(data.gateId)
+    if not barrier_opened:
+        ticket.CancelTicket()
+        raise HTTPException(status_code=500, detail="Barrier open failed")
+
+    LogManager.LogEvent(
+        f"Temporary ticket {ticket.ticketId} issued for {data.licensePlate} at zone {zone.zoneId}"
+    )
+
+    return {
+        "message": "Temporary ticket issued successfully",
+        "ticket": ticket.GenerateRecord(),
+        "suggestedSlot": {
+            "slotId": selected_slot.slotId,
+            "slotType": selected_slot.slotType,
+            "zoneId": zone.zoneId,
+        },
+        "barrierOpened": True,
+    }
