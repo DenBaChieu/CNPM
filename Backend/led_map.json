@@ -3,54 +3,210 @@
     {
       "ledID": "BOARD_MAIN_GATE",
       "locationNode": "Cổng Chính (Vào)",
-      "x": 50,
-      "y": 90,
+      "x": 53,
+      "y": 95,
       "routes": [
         {
           "arrow": "STRAIGHT",
-          "target_children": ["BOARD_JUNCTION_1"]
+          "target_children": [
+            "BOARD_GARDEN_1",
+            "BOARD_GARDEN_2",
+            "BOARD_H1_H2_H3",
+            "BOARD_H4_H6",
+            "BOARD_SPORT",
+            "BOARD_MAIN_GATE_OUT"
+          ]
         }
       ]
     },
     {
-      "ledID": "BOARD_JUNCTION_1",
-      "locationNode": "Ngã rẽ Trung Tâm",
-      "x": 50,
+      "ledID": "BOARD_GARDEN_1",
+      "locationNode": "Vườn ươm ngõ 1",
+      "x": 56,
+      "y": 75,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots":[]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_2",
+      "locationNode": "Vườn ươm ngõ 2",
+      "x": 56,
       "y": 60,
       "routes": [
         {
-          "arrow": "LEFT",
-          "target_children": ["BOARD_CS1_LEAF"]
-        },
+          "arrow": "RIGHT",
+          "target_children": [
+            "BOARD_GARDEN_A",
+            "BOARD_GARDEN_B",
+            "BOARD_GARDEN_C",
+            "BOARD_GARDEN_D"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_A",
+      "locationNode": "Vườn ươm khu A",
+      "x": 81,
+      "y": 60,
+      "routes": [
         {
           "arrow": "RIGHT",
-          "target_children": ["BOARD_CS2_LEAF"]
-        }
-      ]
-    },
-    {
-      "ledID": "BOARD_CS1_LEAF",
-      "locationNode": "Lối vào CS1",
-      "x": 25,
-      "y": 35,
-      "routes": [
-        {
-          "arrow": "STRAIGHT",
-          "target_zones": ["CS1"],
-          "target_slots": [] 
-        }
-      ]
-    },
-    {
-      "ledID": "BOARD_CS2_LEAF",
-      "locationNode": "Lối vào CS2",
-      "x": 75,
-      "y": 35,
-      "routes": [
-        {
-          "arrow": "STRAIGHT",
-          "target_zones": ["CS2"],
           "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_B",
+      "locationNode": "Vườn ươm khu B",
+      "x": 81,
+      "y": 55,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_C",
+      "locationNode": "Vườn ươm khu C",
+      "x": 94,
+      "y": 60,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_D",
+      "locationNode": "Vườn ươm khu D",
+      "x": 94,
+      "y": 55,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_SPORT",
+      "locationNode": "Nhà Thể dục",
+      "x": 56,
+      "y": 45,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H4_H6",
+      "locationNode": "H4, H6",
+      "x": 50,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_children":[
+            "BOARD_H4",
+            "BOARD_H6"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H1_H2_H3",
+      "locationNode": "H1, H2, H3",
+      "x": 50,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_children":[
+            "BOARD_H1",
+            "BOARD_H2",
+            "BOARD_H3"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H4",
+      "locationNode": "H4",
+      "x": 45,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H6",
+      "locationNode": "H6",
+      "x": 25,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H1",
+      "locationNode": "H1",
+      "x": 45,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H2",
+      "locationNode": "H2",
+      "x": 30,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H3",
+      "locationNode": "H3",
+      "x": 20,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": []
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_MAIN_GATE_OUT",
+      "locationNode": "Cổng Chính (Ra)",
+      "x": 53,
+      "y": 10,
+      "routes": [
+        {
+          "arrow": "STRAIGHT"
         }
       ]
     }
