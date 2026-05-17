@@ -43,12 +43,12 @@ export default function CreateAccount() {
       <h1 className="text-3xl font-bold text-center mb-4 text-white">
         Tạo phương tiện
       </h1>
-      
+
       <Link to="/admin">
         <button
           className="absolute top-4 left-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2 rounded-lg"
         >
-          Back
+          Quay lại
         </button>
       </Link>
 

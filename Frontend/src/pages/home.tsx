@@ -8,15 +8,15 @@ export default function Page() {
                 <button
                     className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2 rounded-lg"
                 >
-                    Back to login
+                    Quay lại
                 </button>
             </Link>
 
             <Link to="/payment">
                 <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2 rounded-lg"
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2 rounded-lg w-sm"
                 >
-                    Payments
+                    Thanh toán
                 </button>
             </Link>
         </div>

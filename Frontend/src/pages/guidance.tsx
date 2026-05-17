@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 // Import the image directly so Vite knows to bundle it
 import mapImage from '../../images/parking_map.png';
 
@@ -164,6 +165,13 @@ export default function Guidance() {
 
   return (
     <div className="p-6 flex flex-col font-sans h-screen w-full">
+      <Link to="/login">
+        <button
+          className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold p-2 rounded-lg"
+        >
+          Quay lại
+        </button>
+      </Link>
       
       <h1 className="text-3xl font-bold mb-6">
         Bản đồ điều hướng bãi đậu xe

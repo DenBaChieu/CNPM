@@ -88,6 +88,14 @@ export default function Login() {
           Vào cổng
         </button>
       </Link>
+
+      <Link to="/guidance">
+        <button
+          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
+        >
+          Chỉ dẫn
+        </button>
+      </Link>
     </div>
   );
 }

@@ -19,7 +19,6 @@ export default function TicketPaymentPage() {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
-    // Load ticket from localStorage
     useEffect(() => {
         const stored = localStorage.getItem("ticket");
 
@@ -91,14 +90,12 @@ export default function TicketPaymentPage() {
                 Thanh toán vé xe
             </h1>
 
-            {/* Error */}
             {errorMessage && (
                 <p className="text-red-500 text-center text-sm">
                     {errorMessage}
                 </p>
             )}
 
-            {/* Ticket info */}
             <div className="bg-white p-4 rounded-lg space-y-2">
                 <p><b>Mã vé:</b> {ticket.ticketId}</p>
                 <p><b>Biển số:</b> {ticket.licensePlate}</p>
@@ -107,7 +104,6 @@ export default function TicketPaymentPage() {
                 <p><b>Trạng thái:</b> {ticket.status}</p>
             </div>
 
-            {/* Pay button */}
             {ticket.status !== "Paid" && (
                 <button
                     onClick={handleFakePay}
@@ -118,14 +114,12 @@ export default function TicketPaymentPage() {
                 </button>
             )}
 
-            {/* Success message */}
             {ticket.status === "Paid" && (
                 <div className="bg-white p-3 rounded-lg text-green-600 text-center font-semibold">
                     ✔ Thanh toán thành công (demo)
                 </div>
             )}
 
-            {/* Back */}
             <Link to="/entrance">
                 <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-full">
                     Quay lại
