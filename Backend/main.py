@@ -81,12 +81,44 @@ def GetInfo(authorization: str = Header()):
     else:
         raise HTTPException(status_code=403, detail="No user ID found")
     
+#note: API lay cau hinh bieu phi hien tai (admin xem)
+@app.get("/billing/policy")
+def GetBillingPolicyAPI(authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "ViewBillingPolicy"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    policies = GetAllBillingPolicies()
+    return {"policies": policies}
+
+#note: API cap nhat cau hinh bieu phi (admin tao/sua)
+@app.post("/billing/policy")
+def CreateBillingPolicyAPI(data: dict, authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "UpdateBillingPolicy"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    result = CreateOrUpdateBillingPolicy(data)
+    if result.get("status") == "success":
+        LogManager.LogEvent(f"Admin updated billing policy: {data.get('groupTarget')}")
+        return {"message": "Billing policy updated successfully", "policyId": result.get("policyId")}
+    else:
+        raise HTTPException(status_code=400, detail=result.get("message"))
+
+#note: API lay chu ky thanh toan hien tai
+@app.get("/billing/period")
+def GetBillingPeriodAPI(authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "ViewBillingPeriod"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    period = GetCurrentBillingPeriod()
+    return period
+    
 @app.post("/payment/startBillingPeriod")
 def StartBillingPeriodAPI(authorization: str = Header()):
     if not AuthorizeAccess(authorization.replace("Bearer ", ""), "StartBillingPeriod"):
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     StartBillingPeriod()
+    LogManager.LogEvent("Admin started billing period")
     return {"message": "Successful"}
     
 @app.post("/payment/stopBillingPeriod")
@@ -95,15 +127,30 @@ def StopBillingPeriodAPI(authorization: str = Header()):
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     StopBillingPeriod()
+    LogManager.LogEvent("Admin stopped billing period")
     return {"message": "Successful"}
 
+#note: Fix ten ham va tra response ro rang
 @app.post("/payment/pay")
-def Pay(data: PayRequest):
-    VerifyPayment(data.paymentId)
+def PaymentAPI(data: PayRequest):
+    try:
+        VerifyPayment(data.paymentId)
+        LogManager.LogEvent(f"Payment {data.paymentId} verified")
+        return {"message": "Payment verified successfully", "paymentId": data.paymentId, "status": "Paid"}
+    except Exception as e:
+        LogManager.LogEvent(f"Error verifying payment: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
+#note: Fix ten ham va tra response ro rang
 @app.post("/ticket/pay")
-def Pay(data: PayRequest):
-    VerifyTicketPayment(data.paymentId)
+def TicketPaymentAPI(data: PayRequest):
+    try:
+        VerifyTicketPayment(data.paymentId)
+        LogManager.LogEvent(f"Ticket payment {data.paymentId} verified")
+        return {"message": "Ticket payment verified successfully", "ticketId": data.paymentId, "status": "Paid"}
+    except Exception as e:
+        LogManager.LogEvent(f"Error verifying ticket payment: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 #---------- Authentication ----------#
 @app.post("/login")
@@ -186,7 +233,8 @@ def StudentEnter(data: dict):
     studentId = data.get("id")
     licensePlate = data.get("licensePlate")
     zoneId = data.get("zoneId")
-    if studentId is None or licensePlate is None or zoneId is None or license == "":
+    #note: Fix bug - sua license thanh licensePlate
+    if studentId is None or licensePlate is None or zoneId is None or licensePlate == "":
         raise HTTPException(status_code=400, detail="Missing data")
     
     studentId = int(studentId)
@@ -202,6 +250,7 @@ def StudentEnter(data: dict):
     vehicle = GetVehicle(licensePlate)
 
     zone.UserEntered(user, vehicle)
+    return {"message": "Student entered successfully"}
 
 @app.post("/sensor/exit")
 def Exit(data: dict):
@@ -285,15 +334,17 @@ def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
         )
     )
 
+    LogManager.LogEvent(f"Admin created account for {data.fullName} (ID: {data.userId})")
     return {"message": "Signup successful"}
 
 #Admin creates all registered vehicles
 @app.post("/registerVehicle")
-def CreateAccountAPI(data: CreateVehicleData, authorization: str = Header()):
+def RegisterVehicleAPI(data: CreateVehicleData, authorization: str = Header()):
     if not AuthorizeAccess(authorization.replace("Bearer ", ""), "CreateVehicle"):
         raise HTTPException(status_code=403, detail="Unauthorized")
     
     RegisterVehicle(data.licensePlate, data.vehicleType, data.ownerId)
+    LogManager.LogEvent(f"Admin registered vehicle: {data.licensePlate}")
 
     return {"message": "Register successful"}
 

@@ -46,21 +46,36 @@ def ValidateSession(sessionId: str) -> bool:
 
     return True
 
-#Check if user has access to perform the action
+#note: Hoan thien phan quyen theo UC6 - admin co quyen tat ca, user chi co quyen GetPaymentInfo
 def AuthorizeAccess(sessionId: str, action: str) -> bool:
-    #TODO: Finish
-
-    #No system to make the user login again yet so we will just not allow them
+    #note: Kiem tra session co con hop le khong
     if not ValidateSession(sessionId):
         return False
 
     user: User = currentSessions.get(sessionId)["user"]
+    
+    #note: Admin co quyen tat ca hanh dong
     if user.role == "Admin":
         return True
-    elif action == "GetPaymentInfo":
+    
+    #note: User binh thuong chi co quyen lay thong tin thanh toan va view billing period
+    allowed_actions_for_user = ["GetPaymentInfo", "ViewBillingPeriod"]
+    if action in allowed_actions_for_user:
         return True
-    else:
-        return True
+    
+    #note: Staff co quyen them loai hanh dong
+    if user.role == "Staff":
+        staff_actions = ["WriteLog", "GetPaymentInfo"]
+        if action in staff_actions:
+            return True
+    
+    #note: Visitor chi co quyen yeu cau ve tam
+    if user.role == "Visitor":
+        visitor_actions = ["RequestTempTicket", "GetPaymentInfo"]
+        if action in visitor_actions:
+            return True
+    
+    return False
 
 #Change password
 def ChangePassword(userId: int, oldPassword: str, newPassword: str):

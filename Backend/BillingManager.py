@@ -46,6 +46,21 @@ def SetupBillingDB():
     )
     """)
 
+    #note: Them bang billing_policy de luu cau hinh bieu phi theo UC6
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS billing_policy (
+        policyId TEXT PRIMARY KEY,
+        groupTarget TEXT,
+        priceType TEXT,
+        priceValue REAL,
+        startDate TEXT,
+        endDate TEXT,
+        isActive BOOLEAN,
+        createdDate TEXT,
+        updatedDate TEXT
+    )
+    """)
+
     cursor.execute("""
     INSERT OR IGNORE INTO billing (id, startTime, endTime)
     VALUES (1, NULL, NULL)
@@ -84,6 +99,64 @@ def PrintAllPayments():
         print(payment)
     conn.close()
 
+#note: Ham lay cau hinh bieu phi dang hoat dong theo nhom doi tuong
+def GetActiveBillingPolicy(groupTarget: str = None):
+    conn = sqlite3.connect("../Database/Billing.db")
+    cursor = conn.cursor()
+    now = datetime.now().isoformat()
+    
+    if groupTarget:
+        cursor.execute("SELECT * FROM billing_policy WHERE isActive = 1 AND groupTarget = ? AND startDate <= ? AND endDate >= ? ORDER BY updatedDate DESC LIMIT 1", (groupTarget, now, now))
+    else:
+        cursor.execute("SELECT * FROM billing_policy WHERE isActive = 1 AND startDate <= ? AND endDate >= ? ORDER BY updatedDate DESC LIMIT 1", (now, now))
+    
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return {"policyId": result[0], "groupTarget": result[1], "priceType": result[2], "priceValue": result[3]}
+    return None
+
+#note: Ham tao hoac cap nhat cau hinh bieu phi (admin goi)
+def CreateOrUpdateBillingPolicy(policy_dict: dict):
+    try:
+        conn = sqlite3.connect("../Database/Billing.db")
+        cursor = conn.cursor()
+        policyId = policy_dict.get("policyId") or secrets.token_hex(16)
+        
+        cursor.execute("INSERT OR REPLACE INTO billing_policy (policyId, groupTarget, priceType, priceValue, startDate, endDate, isActive, createdDate, updatedDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+            (policyId, policy_dict.get("groupTarget"), policy_dict.get("priceType"), policy_dict.get("priceValue"), policy_dict.get("startDate"), policy_dict.get("endDate"), 1 if policy_dict.get("isActive") else 0, datetime.now().isoformat(), datetime.now().isoformat()))
+        
+        conn.commit()
+        conn.close()
+        LogManager.LogEvent(f"Billing policy updated: {policy_dict.get('groupTarget')} - {policy_dict.get('priceType')} - {policy_dict.get('priceValue')}")
+        return {"policyId": policyId, "status": "success"}
+    except Exception as e:
+        LogManager.LogEvent(f"Error updating billing policy: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+#note: Ham lay tat ca cau hinh bieu phi
+def GetAllBillingPolicies():
+    conn = sqlite3.connect("../Database/Billing.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT policyId, groupTarget, priceType, priceValue, startDate, endDate, isActive FROM billing_policy ORDER BY updatedDate DESC")
+    policies = cursor.fetchall()
+    conn.close()
+    result = []
+    for p in policies:
+        result.append({"policyId": p[0], "groupTarget": p[1], "priceType": p[2], "priceValue": p[3], "startDate": p[4], "endDate": p[5], "isActive": bool(p[6])})
+    return result
+
+#note: Ham lay chu ky thanh toan hien tai
+def GetCurrentBillingPeriod():
+    conn = sqlite3.connect("../Database/Billing.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT startTime, endTime FROM billing WHERE id = 1")
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return {"startTime": result[0], "endTime": result[1]}
+    return {"startTime": None, "endTime": None}
+
 def GetPayments(userId: int, amount: int = 0) -> list:
     result = []
     conn = sqlite3.connect("../Database/Billing.db")
@@ -103,6 +176,16 @@ def GetPayments(userId: int, amount: int = 0) -> list:
     conn.commit()
     conn.close()
     return result
+
+#note: Model cau hinh bieu phi theo UC6 - admin co the thay doi gia, loai phi, nhom doi tuong
+class BillingPolicyModel(BaseModel):
+    policyId: str = None
+    groupTarget: str  # "Student", "Visitor", "Staff"
+    priceType: str    # "hourly", "per_turn"
+    priceValue: float
+    startDate: str
+    endDate: str
+    isActive: bool = True
 
 class BillingPolicy:
     pricePerHour: float = 1000
@@ -141,6 +224,8 @@ def StartBillingPeriod():
     """, (datetime.now().isoformat(),))
     conn.commit()
     conn.close()
+    #note: Ghi log khi admin bat dau chu ky thanh toan
+    LogManager.LogEvent("Billing period started")
 
 def StopBillingPeriod():
     paymentConn = sqlite3.connect("../Database/Billing.db")
@@ -163,7 +248,7 @@ def StopBillingPeriod():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT sessionId, entryTime, exitTime, userId, status
+        SELECT sessionId, entryTime, exitTime, userId, sessionStatus
         FROM parkingSessions
         WHERE sessionStatus = 'Completed'
         AND exitTime >= ?
@@ -175,7 +260,7 @@ def StopBillingPeriod():
     user_sessions = defaultdict(list)
 
     for session in sessions:
-        sessionId, entryTime, exitTime, userId, status = session
+        sessionId, entryTime, exitTime, userId, sessionStatus = session
 
         if not exitTime:
             continue
@@ -227,7 +312,7 @@ def StopBillingPeriod():
                     WHERE sessionId = ?
                 """, (paymentId, item["sessionId"]))
 
-            NotifyUser(userId, f"Tổng phí gửi xe: {totalFee}")
+            NotifyUser(userId, f"Tong phi gui xe: {totalFee}")
 
         else:
             #Free is counted as paid
@@ -254,6 +339,8 @@ def StopBillingPeriod():
     conn.close()
     paymentConn.commit()
     paymentConn.close()
+    #note: Ghi log khi admin ket thuc chu ky thanh toan
+    LogManager.LogEvent("Billing period stopped")
 
 #Function for when BKPay sends a callback to notify that the payment is successful
 def VerifyPayment(paymentId: str):
@@ -282,7 +369,7 @@ def VerifyTicketPayment(ticketId: str):
 def HandlePaymentFailure(paymentId: str):
     NotifyUser(paymentId, f"Your payment with id {paymentId} has failed. Please try again.")
 
-def SaveTicket(ticket: Ticket):
+def SaveTicket(ticket):
     conn = sqlite3.connect("../Database/Billing.db")
     cursor = conn.cursor()
 
@@ -307,11 +394,11 @@ def SaveTicket(ticket: Ticket):
 class Payment(BaseModel):
     paymentId: str
     userId: int
-    amount: float | None = None
-    paymentDate: str | None = None
-    dueDate: str | None = None
+    amount: float = None
+    paymentDate: str = None
+    dueDate: str = None
     status: str
-    QRCode: str | None = None
+    QRCode: str = None
 
 class Ticket:
     ticketId: str
