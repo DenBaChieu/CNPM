@@ -4,6 +4,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from ParkingSession import ParkingSession
 from LogManager import LogManager
 from User import *
+from collections import defaultdict
+import secrets
 
 #All status: Awaiting, Pending, Paid, Overdue, Invalid
 
@@ -22,6 +24,17 @@ def SetupBillingDB():
         dueDate TEXT,
         status TEXT,
         QRCode TEXT
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ticket (
+        ticketId TEXT PRIMARY KEY,
+        licensePlate TEXT NOT NULL,
+        zoneId TEXT,
+        amount REAL,
+        issuedTime TEXT,
+        status TEXT
     )
     """)
 
@@ -132,12 +145,14 @@ def StartBillingPeriod():
 def StopBillingPeriod():
     paymentConn = sqlite3.connect("../Database/Billing.db")
     paymentCursor = paymentConn.cursor()
-    #Set up end time
+
+    #Set end time
+    endTime = datetime.now()
     paymentCursor.execute("""
-    UPDATE billing
-    SET endTime = ?
-    WHERE id = 1
-    """, (datetime.now().isoformat(),))
+        UPDATE billing
+        SET endTime = ?
+        WHERE id = 1
+    """, (endTime.isoformat(),))
 
     #Get start time
     paymentCursor.execute("SELECT startTime FROM billing WHERE id = 1")
@@ -147,44 +162,93 @@ def StopBillingPeriod():
     conn = sqlite3.connect("../Database/ParkingSession.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM parkingSessions WHERE sessionStatus = 'Completed' AND exitTime >= ? AND exitTime <= ?", (startTime, datetime.now().isoformat()))
-    completedSessions = cursor.fetchall()
-    for session in completedSessions:
-        #If exitTime is null, skip
-        if not session[2]:
+    cursor.execute("""
+        SELECT sessionId, entryTime, exitTime, userId, status
+        FROM parkingSessions
+        WHERE sessionStatus = 'Completed'
+        AND exitTime >= ?
+        AND exitTime <= ?
+    """, (startTime.isoformat(), endTime.isoformat()))
+
+    sessions = cursor.fetchall()
+
+    user_sessions = defaultdict(list)
+
+    for session in sessions:
+        sessionId, entryTime, exitTime, userId, status = session
+
+        if not exitTime:
             continue
 
-        if not session[0] or not session[1] or not session[5]:
-            NotifyStaff(f"Data inconsistency detected for session {session[0]}: missing required fields")
-            cursor.execute("UPDATE parkingSessions SET sessionStatus = 'Invalid' WHERE sessionId = ?", (session[0],))
-            continue
-
-        entryTime = datetime.fromisoformat(session[1])
-        exitTime = datetime.fromisoformat(session[2])
+        entryTime = datetime.fromisoformat(entryTime)
+        exitTime = datetime.fromisoformat(exitTime)
 
         if exitTime < entryTime:
-            NotifyStaff(f"Data inconsistency detected for session {session[0]}: exit time is before entry time")
-            cursor.execute("UPDATE parkingSessions SET sessionStatus = 'Invalid' WHERE sessionId = ?", (session[0],))
+            cursor.execute(
+                "UPDATE parkingSessions SET sessionStatus = 'Invalid' WHERE sessionId = ?",
+                (sessionId,)
+            )
             continue
 
         fee = CalculateFeeByStartAndExit(entryTime, exitTime)
-        expiresAt = (datetime.now() + timedelta(days=BillingPolicy.paymentTerm)).isoformat()
-        if fee > 0:
-            paymentCursor.execute("INSERT INTO payment (paymentId, userId, amount, dueDate, status) VALUES (?, ?, ?, ?, ?)", (session[0], session[5], fee, expiresAt, "Awaiting"))
-        else:
-            paymentCursor.execute("INSERT INTO payment (paymentId, userId, amount, paymentDate, dueDate, status) VALUES (?, ?, ?, ?, ?, ?)", (session[0], session[5], fee, datetime.now(), expiresAt, "Paid"))
-            continue
 
-        qr = GetPaymentQR(session[0])
-        if qr is not None:
+        user_sessions[userId].append({
+            "sessionId": sessionId,
+            "fee": fee
+        })
+
+
+    for userId, items in user_sessions.items():
+
+        totalFee = sum(item["fee"] for item in items)
+        paymentId = secrets.token_hex(16)
+
+        expiresAt = (datetime.now() + timedelta(days=BillingPolicy.paymentTerm)).isoformat()
+
+        if totalFee > 0:
             paymentCursor.execute("""
-                            UPDATE payment 
-                            SET 
-                                QRCode = ?,
-                                status = 'Pending'
-                            WHERE paymentId = ?
-                        """, (qr, session[0]))
-            NotifyUser(session[5], f"Your parking fee of {fee} is due.")
+                INSERT INTO payment (paymentId, userId, amount, dueDate, status)
+                VALUES (?, ?, ?, ?, ?)
+            """, (paymentId, userId, totalFee, expiresAt, "Awaiting"))
+
+            qr = GetPaymentQR(paymentId)
+
+            if qr:
+                paymentCursor.execute("""
+                    UPDATE payment
+                    SET QRCode = ?, status = 'Pending'
+                    WHERE paymentId = ?
+                """, (qr, paymentId))
+
+            for item in items:
+                cursor.execute("""
+                    UPDATE parkingSessions
+                    SET paymentId = ?
+                    WHERE sessionId = ?
+                """, (paymentId, item["sessionId"]))
+
+            NotifyUser(userId, f"Tổng phí gửi xe: {totalFee}")
+
+        else:
+            #Free is counted as paid
+            paymentCursor.execute("""
+                INSERT INTO payment (paymentId, userId, amount, paymentDate, dueDate, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                paymentId,
+                userId,
+                0,
+                endTime.isoformat(),
+                expiresAt,
+                "Paid"
+            ))
+
+            for item in items:
+                cursor.execute("""
+                    UPDATE parkingSessions
+                    SET paymentId = ?
+                    WHERE sessionId = ?
+                """, (paymentId, item["sessionId"]))
 
     conn.commit()
     conn.close()
@@ -199,9 +263,46 @@ def VerifyPayment(paymentId: str):
     conn.commit()
     conn.close()
 
+#Function for when staff collected the payment from the visitor
+def VerifyTicketPayment(ticketId: str):
+    conn = sqlite3.connect("../Database/Billing.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE ticket
+        SET status = 'Paid'
+        WHERE ticketId = ?
+    """, (ticketId,))
+
+    conn.commit()
+    conn.close()
+
+
 #Function for when BKPay sends a callback to notify that the payment has failed
 def HandlePaymentFailure(paymentId: str):
     NotifyUser(paymentId, f"Your payment with id {paymentId} has failed. Please try again.")
+
+def SaveTicket(ticket: Ticket):
+    conn = sqlite3.connect("../Database/Billing.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO ticket (
+            ticketId, licensePlate, zoneId,
+            amount, issuedTime, status
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        ticket.ticketId,
+        ticket.licensePlate,
+        ticket.zoneId,
+        ticket.amount,
+        ticket.issuedTime.isoformat(),
+        ticket.status,
+    ))
+
+    conn.commit()
+    conn.close()
 
 class Payment(BaseModel):
     paymentId: str
@@ -216,14 +317,76 @@ class Ticket:
     ticketId: str
     amount: float
     issuedTime: datetime
-    expirationTime: datetime
     status: str
+    zoneId: str
+    licensePlate: str
+
+    def __init__(self, zoneId: str, licensePlate: str):
+        self.ticketId = secrets.token_hex(16)
+        self.issuedTime = datetime.now()
+        self.status = "Opened"
+        self.zoneId = zoneId
+        self.licensePlate = licensePlate
+        self.amount = 0.0
 
     def CloseTicket(self):
-        self.status = "Closed"
+        conn = sqlite3.connect("../Database/ParkingSession.db")
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT entryTime, exitTime
+            FROM parkingSessions
+            WHERE licensePlate = ?
+            AND sessionStatus = 'Completed'
+            AND entryTime >= ?
+        """, (self.licensePlate, self.issuedTime.isoformat()))
+
+        sessions = cursor.fetchall()
+        conn.close()
+
+        total = 0.0
+
+        for entryTime, exitTime in sessions:
+            if not entryTime or not exitTime:
+                continue
+
+            entry_dt = datetime.fromisoformat(entryTime)
+            exit_dt = datetime.fromisoformat(exitTime)
+
+            if exit_dt < entry_dt:
+                continue
+
+            total += CalculateFeeByStartAndExit(entry_dt, exit_dt)
+
+        self.amount = total
+        self.status = "Pending"
+
+        conn = sqlite3.connect("../Database/Billing.db")
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE ticket
+            SET amount = ?, status = ?
+            WHERE ticketId = ?
+        """, (self.amount, self.status, self.ticketId))
+
+        conn.commit()
+        conn.close()
+
+        return self.amount
 
     def UpdateStatus(self, newStatus: str):
         self.status = newStatus
 
     def GetStatus(self):
         return self.status
+    
+    def GenerateRecord(self):
+        return {
+            "ticketId": self.ticketId,
+            "amount": self.amount,
+            "issuedTime": self.issuedTime.isoformat() if self.issuedTime else None,
+            "status": self.status,
+            "zoneId": self.zoneId,
+            "licensePlate": self.licensePlate,
+        }

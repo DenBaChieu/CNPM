@@ -72,7 +72,7 @@ export default function Page() {
         onClick={handleSensorDetect}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
-        Send sensor data
+        Gửi dữ liệu
       </button>
     </div>
   );

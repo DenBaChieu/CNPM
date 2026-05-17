@@ -13,8 +13,6 @@ from ParkingSlot import ParkingSlot
 from Sensor import Sensor
 from LEDBoard import LEDBoard
 from GuidanceEngine import GuidanceEngine
-from TemporaryTicket import *
-from BarrierService import BarrierService
 
 import uvicorn
 import math
@@ -46,10 +44,10 @@ except Exception as e:
 
 #Create parking zones and slots
 parkingManager = ParkingManager()
-barrierService = BarrierService()
 
 parkingSlots = []
 parkingSensors = []
+tickets: list[Ticket] = []
 zones = ["CS1", "CS2"]
 for zoneName in zones:
     slots = []
@@ -100,8 +98,12 @@ def StopBillingPeriodAPI(authorization: str = Header()):
     return {"message": "Successful"}
 
 @app.post("/payment/pay")
-def Pay(data: PayRequest, authorization: str = Header()):
+def Pay(data: PayRequest):
     VerifyPayment(data.paymentId)
+
+@app.post("/ticket/pay")
+def Pay(data: PayRequest):
+    VerifyTicketPayment(data.paymentId)
 
 #---------- Authentication ----------#
 @app.post("/login")
@@ -178,6 +180,54 @@ def GetAvailableSlots(zoneId: str):
         return {"availableSlots": [slot.slotId for slot in availableSlots]}
     else:
         raise HTTPException(status_code=404, detail="Parking zone not found")
+
+@app.post("/sensor/studentEnter")
+def StudentEnter(data: dict):
+    studentId = data.get("id")
+    licensePlate = data.get("licensePlate")
+    zoneId = data.get("zoneId")
+    if studentId is None or licensePlate is None or zoneId is None or license == "":
+        raise HTTPException(status_code=400, detail="Missing data")
+    
+    studentId = int(studentId)
+    
+    user = GetUserFromId(studentId)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    zone = parkingManager.GetZone(zoneId)
+    if zone is None:
+        raise HTTPException(status_code=404, detail="Zone not found")
+
+    vehicle = GetVehicle(licensePlate)
+
+    zone.UserEntered(user, vehicle)
+
+@app.post("/sensor/exit")
+def Exit(data: dict):
+    licensePlate = data.get("licensePlate")
+    zoneId = data.get("zoneId")
+    if licensePlate is None or zoneId is None:
+        raise HTTPException(status_code=400, detail="Missing data")
+    
+    zone = parkingManager.GetZone(zoneId)
+    if zone is None:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    
+    if zone.VehicleLeft(licensePlate=licensePlate):
+        parkingTicket = None
+        for ticket in tickets:
+            if ticket.licensePlate == licensePlate:
+                ticket.CloseTicket()
+                parkingTicket = ticket
+                break 
+
+        if parkingTicket:
+            return {"message": "Success", "ticket": ticket.GenerateRecord()}
+        else:
+            return {"message": "Success"}
+    else:
+        raise HTTPException(status_code=404, detail="Vehicle entry not found")
     
 #---------- Guidance Engine (UC04) ----------#
 @app.get("/guidance/status")
@@ -189,7 +239,6 @@ def GetGuidanceStatus():
     # 2. Return the pure dynamic JSON state to the frontend
     dynamic_json = guidanceEngine.get_frontend_state()
     return {"led_boards": dynamic_json}
-
 
 #---------- Mock Engine (UC04 Testing) ----------#
 @app.post("/mock/led")
@@ -213,43 +262,6 @@ def MockLEDOverride(input: dict):
         guidanceEngine.set_override(ledID, arrow, color.upper())
         return {"message": f"Forced {ledID} [{arrow}] to {color.upper()}"}
 
-
-@app.post("/sensor/studentEnter")
-def StudentEnter(input: dict):
-    studentId = int(input.get("id"))
-    licensePlate = input.get("licensePlate")
-    zoneId = input.get("zoneId")
-    if studentId is None or licensePlate is None or zoneId is None or license == "":
-        raise HTTPException(status_code=400, detail="Missing data")
-    
-    user = GetUserFromId(studentId)
-    if user is None:
-        raise HTTPException(status_code=404, detail="Student not found")
-    
-    zone = parkingManager.GetZone(zoneId)
-    if zone is None:
-        raise HTTPException(status_code=404, detail="Zone not found")
-
-    vehicle = GetVehicle(licensePlate)
-
-    zone.UserEntered(user, vehicle)
-
-@app.post("/sensor/exit")
-def Exit(input: dict):
-    licensePlate = input.get("licensePlate")
-    zoneId = input.get("zoneId")
-    if licensePlate is None or zoneId is None:
-        raise HTTPException(status_code=400, detail="Missing data")
-    
-    zone = parkingManager.GetZone(zoneId)
-    if zone is None:
-        raise HTTPException(status_code=404, detail="Zone not found")
-    
-    if zone.VehicleLeft(licensePlate=licensePlate):
-        return {"message": "Success"}
-    else:
-        raise HTTPException(status_code=404, detail="Vehicle entry not found")
-    
 #---------- Admin ----------#
 
 #Admin creates all accounts including students and staffs
@@ -287,54 +299,29 @@ def CreateAccountAPI(data: CreateVehicleData, authorization: str = Header()):
 
 #---------- TemporaryTicket ----------#
 @app.post("/visitor/requestTempTicket")
-def RequestTempTicket(data: TempTicketRequest):
-    zone = next((z for z in parkingManager.managedZones if z.zoneId == data.zoneId), None)
-    if not zone:
+def RequestTempTicket(data: dict):
+    licensePlate = data.get("licensePlate")
+    zoneId = data.get("zoneId")
+    zone = parkingManager.GetZone(zoneId)
+    if zone is None:
         raise HTTPException(status_code=404, detail="Parking zone not found")
 
     available_slots = zone.GetAvailableSlots()
-    if not available_slots:
+    if len(available_slots) == 0:
         raise HTTPException(status_code=400, detail="No available slots in this zone")
 
-    matched_slot = next(
-        (slot for slot in available_slots if slot.slotType.lower() == data.vehicleType.lower()),
-        None
-    )
-    selected_slot = matched_slot if matched_slot else available_slots[0]
+    user = Visitor()
+    vehicle = GetVehicle(licensePlate)
+    zone.UserEntered(user, vehicle)
 
-    vehicle = next((v for v in parkingManager.vehicles if v.licensePlate == data.licensePlate), None)
-    if not vehicle:
-        vehicle = RegisterVehicle(
-            licensePlate=data.licensePlate,
-            vehicleType=data.vehicleType,
-            ownerId="VISITOR",
-        )
+    ticket = Ticket(zoneId=zoneId, licensePlate=licensePlate)
+    tickets.append(ticket)
 
-    ticket = TemporaryTicket(
-        ticketId=f"T{len(parkingManager.activeSessions) + len(parkingManager.vehicles)}",
-        licensePlate=data.licensePlate,
-        zoneId=zone.zoneId,
-        gateId=data.gateId,
-    )
-
-    barrier_opened = barrierService.openBarrier(data.gateId)
-    if not barrier_opened:
-        ticket.CancelTicket()
-        raise HTTPException(status_code=500, detail="Barrier open failed")
-
-    LogManager.LogEvent(
-        f"Temporary ticket {ticket.ticketId} issued for {data.licensePlate} at zone {zone.zoneId}"
-    )
+    LogManager.LogEvent(f"Temporary ticket {ticket.ticketId} issued for {licensePlate} at zone {zoneId}")
 
     return {
         "message": "Temporary ticket issued successfully",
-        "ticket": ticket.GenerateRecord(),
-        "suggestedSlot": {
-            "slotId": selected_slot.slotId,
-            "slotType": selected_slot.slotType,
-            "zoneId": zone.zoneId,
-        },
-        "barrierOpened": True,
+        "ticket": ticket.GenerateRecord()
     }
 
 if __name__ == "__main__":

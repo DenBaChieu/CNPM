@@ -28,6 +28,7 @@ export default function Login() {
       if (response.ok) {
         console.log("Success:", data);
         if (data.ticket) {
+          localStorage.setItem("ticket", JSON.stringify(data.ticket));
           window.location.href = "/ticket"
         } else {
           window.location.href = "/entrance"

@@ -7,6 +7,7 @@ import RegisterVehicle from "./pages/registerVehicle"
 import Admin from "./pages/admin"
 import Home from "./pages/home"
 import Payment from "./pages/payment"
+import Ticket from "./pages/ticket"
 import Staff from "./pages/staff"
 import Entrance from "./pages/entrance"
 import Exit from "./pages/exit"
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/entrance" element={<Entrance />} />
         <Route path="/sensor" element={<Sensor />} />
         <Route path="/exit" element={<Exit />} />
+        <Route path="/ticket" element={<Ticket />} />
         <Route path="/createaccount" element={
             <ProtectedRoute>
               <CreateAccount />
@@ -52,11 +54,7 @@ export default function App() {
             </ProtectedRoute>
         } />
         <Route path="/test" element={<Test />} />
-        <Route path="/guidance" element={
-            <ProtectedRoute>
-                <Guidance />
-            </ProtectedRoute>
-        } />
+        <Route path="/guidance" element={<Guidance />} />
     </Routes>
   )
 }

@@ -11,13 +11,13 @@ class CreateAccountData(BaseModel):
     password: str
 
 class User:
-    userId: int
-    fullName: str
-    role: str
-    email: str
-    phoneNumber: str
+    userId: int | None
+    fullName: str | None
+    role: str | None
+    email: str | None
+    phoneNumber: str | None
 
-    def __init__(self, userId: int, fullName: str, role: str, email: str, phoneNumber: str):
+    def __init__(self, userId: int | None = None, fullName: str | None = None, role: str | None = None, email: str | None = None, phoneNumber: str | None = None):
         self.userId = userId
         self.fullName = fullName
         self.role = role

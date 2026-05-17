@@ -20,9 +20,9 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id,
-          licensePlate,
-          zoneId,
+          "id": id,
+          "zoneId": zoneId,
+          "licensePlate": licensePlate,
         }),
       });
 
@@ -51,8 +51,8 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id,
-          licensePlate,
+          "zoneId": zoneId,
+          "licensePlate": licensePlate,
         }),
       });
 

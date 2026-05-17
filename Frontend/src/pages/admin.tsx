@@ -46,14 +46,14 @@ export default function Page() {
         onClick={startBillingPeriod}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
-        Start billing period
+        Bắt đầu chu kỳ thanh toán
       </button>
 
       <button
         onClick={stopBillingPeriod}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
-        Stop billing period
+        Dừng chu kỳ thanh toán
       </button>
 
       <Link to="/createaccount">
@@ -61,7 +61,7 @@ export default function Page() {
             onClick={startBillingPeriod}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
         >
-            Create accounts
+          Tạo tài khoản
         </button>
       </Link>
       <Link to="/registervehicle">
@@ -69,7 +69,7 @@ export default function Page() {
             onClick={startBillingPeriod}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
         >
-            Register vehicles
+          Đăng ký xe
         </button>
       </Link>
     </div>
