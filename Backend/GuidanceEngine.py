@@ -74,7 +74,7 @@ class GuidanceEngine:
 
     def evaluate_capacity(self, capacity: int, available: int) -> dict:
         if capacity == 0:
-            return {"color": "RED", "message": "ERROR"}
+            return {"color": "GREEN", "message": "AVAILABLE"}
         vacancy_rate = (available / capacity) * 100
         if vacancy_rate == 0:
             return {"color": "RED", "message": "FULL"}
