@@ -4,7 +4,7 @@
       "ledID": "BOARD_MAIN_GATE",
       "locationNode": "Cổng Chính (Vào)",
       "x": 50,
-      "y": 85,
+      "y": 90,
       "routes": [
         {
           "arrow": "STRAIGHT",

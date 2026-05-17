@@ -5,10 +5,11 @@ class LEDBoard:
         self.x = x
         self.y = y
         self.connectionStatus = "ONLINE"
-        # Since one board can show multiple arrows (Left, Right, Straight)
+        # Represents the actual lights currently glowing on the physical board
         self.displays = [] 
 
     def updateDisplays(self, new_displays: list):
+        """Hardware command to change the physical LED lights"""
         self.displays = new_displays
 
     def triggerMaintenanceMode(self):
@@ -16,7 +17,5 @@ class LEDBoard:
         self.displays = [{
             "arrow": "ALL",
             "color": "YELLOW",
-            "message": "Đang bảo trì",
-            "available": 0,
-            "capacity": 0
+            "message": "MAINTENANCE"
         }]

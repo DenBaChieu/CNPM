@@ -11,6 +11,7 @@ from Sensor import Sensor
 from LEDBoard import LEDBoard
 from GuidanceEngine import GuidanceEngine
 import uvicorn
+import math
 
 app = FastAPI()
 
@@ -119,11 +120,40 @@ def GetAvailableSlots(zoneId: str):
         return {"message": "Parking zone not found"}, 404
     
 # _ Guidance Engine (UC04)
+#---------- Guidance Engine (UC04) ----------#
 @app.get("/guidance/status")
 def GetGuidanceStatus():
-    # Calculates routing in real-time based on the JSON map and current slot status
-    status_report = guidanceEngine.calculateRouting()
-    return {"led_boards": status_report}
+    """Endpoint for the Frontend React Dashboard to consume"""
+    # 1. Update the physical hardware states based on live IoT data
+    guidanceEngine.update_all_leds()
+    
+    # 2. Return the pure dynamic JSON state to the frontend
+    dynamic_json = guidanceEngine.get_frontend_state()
+    return {"led_boards": dynamic_json}
+
+
+#---------- Mock Engine (UC04 Testing) ----------#
+@app.post("/mock/led")
+def MockLEDOverride(input: dict):
+    """
+    Directly force an LED to a specific color.
+    POST JSON: {"ledID": "BOARD_JUNCTION_1", "arrow": "LEFT", "color": "RED"}
+    Send color: "CLEAR" to remove all overrides and return to normal math.
+    """
+    ledID = input.get("ledID")
+    arrow = input.get("arrow", "STRAIGHT")
+    color = input.get("color")
+
+    if not ledID or not color:
+        return {"message": "Missing ledID or color"}, 400
+
+    if color.upper() == "CLEAR":
+        guidanceEngine.clear_overrides()
+        return {"message": "All overrides cleared. Returning to real math."}
+    else:
+        guidanceEngine.set_override(ledID, arrow, color.upper())
+        return {"message": f"Forced {ledID} [{arrow}] to {color.upper()}"}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
