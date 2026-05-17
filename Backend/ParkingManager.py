@@ -41,7 +41,7 @@ class ParkingManager:
                 s for s in self.activeSessions
                 if s.licensePlate == licensePlate
                 and s.parkingSlotId == slot.slotId
-                and s.sessionStatus == "Active"
+                and s.status == "Active"
             ),
             None
         )
@@ -66,7 +66,7 @@ class ParkingManager:
                 s for s in self.activeSessions
                 if s.licensePlate == licensePlate
                 and s.parkingSlotId == slot.slotId
-                and s.sessionStatus == "Active"
+                and s.status == "Active"
             ),
             None
         )

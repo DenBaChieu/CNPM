@@ -14,7 +14,7 @@ def SetupParkingSessionDB():
         sessionId TEXT PRIMARY KEY,
         entryTime TEXT NOT NULL,
         exitTime TEXT,
-        sessionStatus TEXT NOT NULL,
+        status TEXT NOT NULL,
         parkingSlotId TEXT NOT NULL,
         userId INT,
         zoneId TEXT NOT NULL,
@@ -28,7 +28,7 @@ class ParkingSession:
     sessionId: str
     entryTime: datetime
     exitTime: datetime
-    sessionStatus: str # Active, Completed
+    status: str # Active, Completed
     parkingSlotId: str
     userId: str
     zone: ParkingZone
@@ -37,7 +37,7 @@ class ParkingSession:
     def __init__(self, parkingSlotId: str, zone: ParkingZone, licensePlate: str):
         self.sessionId = secrets.token_hex(16)
         self.entryTime = datetime.now()
-        self.sessionStatus = "Active"
+        self.status = "Active"
         self.parkingSlotId = parkingSlotId
         self.zone = zone
         user, vehicle = zone.GetUserAndVehicleInZone(licensePlate)
@@ -46,25 +46,25 @@ class ParkingSession:
         conn = sqlite3.connect("../Database/ParkingSession.db")
         cursor = conn.cursor()
         try:
-            cursor.execute("INSERT INTO parkingSessions (sessionId, entryTime, sessionStatus, parkingSlotId, userId, zoneId, licensePlate) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                        (self.sessionId, self.entryTime.isoformat(), self.sessionStatus, parkingSlotId, self.userId, zone.zoneId, licensePlate))
+            cursor.execute("INSERT INTO parkingSessions (sessionId, entryTime, status, parkingSlotId, userId, zoneId, licensePlate) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                        (self.sessionId, self.entryTime.isoformat(), self.status, parkingSlotId, self.userId, zone.zoneId, licensePlate))
             conn.commit()
         finally:
             conn.close()
 
     def GetTotalTime(self):
-        if self.sessionStatus == "Active":
+        if self.status == "Active":
             return (datetime.now() - self.entryTime).total_seconds() / 3600
         else:
             return (self.exitTime - self.entryTime).total_seconds() / 3600
 
     def CloseSession(self):
         self.exitTime = datetime.now()
-        self.sessionStatus = "Completed"
+        self.status = "Completed"
         conn = sqlite3.connect("../Database/ParkingSession.db")
         cursor = conn.cursor()
-        cursor.execute("UPDATE parkingSessions SET exitTime = ?, sessionStatus = ? WHERE sessionId = ?", 
-                       (self.exitTime.isoformat(), self.sessionStatus, self.sessionId))
+        cursor.execute("UPDATE parkingSessions SET exitTime = ?, status = ? WHERE sessionId = ?", 
+                       (self.exitTime.isoformat(), self.status, self.sessionId))
         conn.commit()
         conn.close()
 
@@ -74,7 +74,7 @@ class ParkingSession:
             "entryTime": self.entryTime.isoformat(),
             "exitTime": self.exitTime.isoformat() if self.exitTime else None,
             "totalTimeHours": self.GetTotalTime(),
-            "sessionStatus": self.sessionStatus
+            "status": self.status
         }
     
 def PrintAllSessions():

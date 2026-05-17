@@ -167,7 +167,7 @@ def StopBillingPeriod():
     cursor.execute("""
         SELECT sessionId, entryTime, exitTime, userId, status
         FROM parkingSessions
-        WHERE sessionStatus = 'Completed'
+        WHERE status = 'Completed'
         AND exitTime >= ?
         AND exitTime <= ?
     """, (startTime.isoformat(), endTime.isoformat()))
@@ -187,7 +187,7 @@ def StopBillingPeriod():
 
         if exitTime < entryTime:
             cursor.execute(
-                "UPDATE parkingSessions SET sessionStatus = 'Invalid' WHERE sessionId = ?",
+                "UPDATE parkingSessions SET status = 'Invalid' WHERE sessionId = ?",
                 (sessionId,)
             )
             continue
@@ -346,7 +346,7 @@ class Ticket:
             SELECT entryTime, exitTime
             FROM parkingSessions
             WHERE licensePlate = ?
-            AND sessionStatus = 'Completed'
+            AND status = 'Completed'
             AND entryTime >= ?
         """, (self.licensePlate, self.issuedTime.isoformat()))
 
