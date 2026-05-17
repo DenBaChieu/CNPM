@@ -11,10 +11,13 @@ from User import *
 from Vehicle import *
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
+from LEDBoard import LEDBoard
+from GuidanceEngine import GuidanceEngine
 from TemporaryTicket import *
 from BarrierService import BarrierService
 
 import uvicorn
+import math
 
 app = FastAPI()
 
@@ -60,6 +63,10 @@ for zoneName in zones:
         print("Sensor id: ", sensor.sensorId)
     zone = ParkingZone(zoneId=zoneName, zoneName=zoneName, slots=slots)
     parkingManager.managedZones.append(zone)
+
+#Initialize Guidance Engine and load the visual map
+guidanceEngine = GuidanceEngine(parking_manager=parkingManager)
+guidanceEngine.load_map("led_map.json")
 
 print("Parking zones and slots initialized")
 
@@ -171,6 +178,41 @@ def GetAvailableSlots(zoneId: str):
         return {"availableSlots": [slot.slotId for slot in availableSlots]}
     else:
         raise HTTPException(status_code=404, detail="Parking zone not found")
+    
+#---------- Guidance Engine (UC04) ----------#
+@app.get("/guidance/status")
+def GetGuidanceStatus():
+    """Endpoint for the Frontend React Dashboard to consume"""
+    # 1. Update the physical hardware states based on live IoT data
+    guidanceEngine.update_all_leds()
+    
+    # 2. Return the pure dynamic JSON state to the frontend
+    dynamic_json = guidanceEngine.get_frontend_state()
+    return {"led_boards": dynamic_json}
+
+
+#---------- Mock Engine (UC04 Testing) ----------#
+@app.post("/mock/led")
+def MockLEDOverride(input: dict):
+    """
+    Directly force an LED to a specific color.
+    POST JSON: {"ledID": "BOARD_JUNCTION_1", "arrow": "LEFT", "color": "RED"}
+    Send color: "CLEAR" to remove all overrides and return to normal math.
+    """
+    ledID = input.get("ledID")
+    arrow = input.get("arrow", "STRAIGHT")
+    color = input.get("color")
+
+    if not ledID or not color:
+        return {"message": "Missing ledID or color"}, 400
+
+    if color.upper() == "CLEAR":
+        guidanceEngine.clear_overrides()
+        return {"message": "All overrides cleared. Returning to real math."}
+    else:
+        guidanceEngine.set_override(ledID, arrow, color.upper())
+        return {"message": f"Forced {ledID} [{arrow}] to {color.upper()}"}
+
 
 @app.post("/sensor/studentEnter")
 def StudentEnter(input: dict):

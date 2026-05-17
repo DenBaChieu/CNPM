@@ -12,6 +12,7 @@ import Entrance from "./pages/entrance"
 import Exit from "./pages/exit"
 import Sensor from "./pages/sensor"
 import ProtectedRoute from "./ProtectedRoute"
+import Guidance from "./pages/guidance"
 
 export default function App() {
   return (
@@ -51,6 +52,11 @@ export default function App() {
             </ProtectedRoute>
         } />
         <Route path="/test" element={<Test />} />
+        <Route path="/guidance" element={
+            <ProtectedRoute>
+                <Guidance />
+            </ProtectedRoute>
+        } />
     </Routes>
   )
 }
