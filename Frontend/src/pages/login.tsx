@@ -1,12 +1,16 @@
-import { useState } from "react"
-import '../index.css'
+import { useState } from "react";
+import "../index.css";
+
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Login() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
+    setErrorMessage("");
+
     try {
       const response = await fetch(backendURL + "/login", {
         method: "POST",
@@ -24,20 +28,38 @@ export default function Login() {
       if (response.ok) {
         console.log("Login success:", data);
         localStorage.setItem("token", data.token);
-        window.location.href = "/";
+        if (data.role == "Admin") {
+          window.location.href = "/admin";
+        } else if (data.role == "Staff") {
+          window.location.href = "/staff";
+        } else {
+          window.location.href = "/";
+        }
       } else {
         console.log("Login failed:", data);
+        setErrorMessage(data.detail || "Login failed");
       }
     } catch (error) {
       console.error("Error:", error);
+      setErrorMessage("Unable to connect to server");
     }
   };
 
-   return (
+  return (
     <div className="flex flex-col gap-4 max-w-sm mx-auto min-h-screen justify-center">
+      <h1 className="text-3xl font-bold text-center mb-4 text-white">
+        Đăng nhập
+      </h1>
+
+      {errorMessage && (
+        <p className="text-red-500 text-center text-sm">
+          {errorMessage}
+        </p>
+      )}
+
       <input
-        type="email"
-        placeholder="Email"
+        type="text"
+        placeholder="MSSV"
         className="border rounded-lg px-4 py-2 bg-white"
         value={id}
         onChange={(e) => setId(e.target.value)}
@@ -45,7 +67,7 @@ export default function Login() {
 
       <input
         type="password"
-        placeholder="Password"
+        placeholder="Mật khẩu"
         className="border rounded-lg px-4 py-2 bg-white"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
@@ -55,7 +77,7 @@ export default function Login() {
         onClick={handleLogin}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
-        Login
+        Đăng nhập
       </button>
     </div>
   );

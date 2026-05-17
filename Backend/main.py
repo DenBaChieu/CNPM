@@ -1,15 +1,22 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 from AuthManager import *
+from BillingManager import *
 from ParkingManager import ParkingManager
 from ParkingZone import ParkingZone
 from LogManager import LogManager
-from User import User
+from ParkingSession import SetupParkingSessionDB
+from User import *
 from Vehicle import Vehicle
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
 from LEDBoard import LEDBoard
 from GuidanceEngine import GuidanceEngine
+from TemporaryTicket import TemporaryTicket
+from BarrierService import BarrierService
+
 import uvicorn
 import math
 
@@ -23,8 +30,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+billingManager = BillingManager()
+SetupAuthSystem()
+SetupUserSystem()
+SetupParkingSessionDB()
+SetupBillingDB(billingManager)
+try:
+    CreateAccount(0, "Admin", "Admin", "", "")
+except Exception as e:
+    print("Admin account already exists")
+
+try:
+    SignUp(LoginData(id=0, password="Admin"))
+except Exception as e:
+    print("Admin login already exists")
+
 #Create parking zones and slots
 parkingManager = ParkingManager()
+barrierService = BarrierService()
+
+
+class TempTicketRequest(BaseModel):
+    zoneId: str
+    licensePlate: str
+    vehicleType: str = "Unknown"
+    gateId: str = "Gate-1"
+
 parkingSlots = []
 parkingSensors = []
 for zoneName in ["CS1", "CS2"]:
@@ -50,16 +81,14 @@ guidanceEngine.load_map("led_map.json")
 @app.post("/login")
 def Login(data: LoginData):
     user = AuthenticateUser(data)
-    if user:
-        token = CreateUserSession(user.userId)
+    if user is not None:
+        token = CreateUserSession(user)
         return {"message": "Login successful", "role": user.role, "token": token}
     else:
-        return {"message": "Invalid credentials"}, 401
-    
-@app.post("/signup")
-def SignUp(data: LoginData):
-    if SignUp(data):
-        return {"message": "Signup successful"}
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
+        )
     
 @app.post("/logout")
 def Logout(sessionId: str):
@@ -67,7 +96,7 @@ def Logout(sessionId: str):
         TerminateUserSession(sessionId)
         return {"message": "Logout successful"}
     else:
-        return {"message": "Invalid session"}, 401
+        raise HTTPException(status_code=401, detail="Invalid session")
     
 @app.get("/validateSession")
 def ValidateUserSession(authorization: str = Header(None)):
@@ -155,5 +184,81 @@ def MockLEDOverride(input: dict):
         return {"message": f"Forced {ledID} [{arrow}] to {color.upper()}"}
 
 
+#---------- Admin ----------#
+@app.post("/createaccount")
+def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "CreateAccount"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    CreateAccount(
+        userId=data.userId,
+        fullName=data.fullName,
+        role=data.role,
+        email=data.email,
+        phoneNumber=data.phoneNumber
+    )
+
+    SignUp(
+        LoginData(
+            id=data.userId,
+            password=data.password
+        )
+    )
+
+    return {"message": "Signup successful"}
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
+
+#---------- TemporaryTicket ----------#
+@app.post("/visitor/requestTempTicket")
+def RequestTempTicket(data: TempTicketRequest):
+    zone = next((z for z in parkingManager.managedZones if z.zoneId == data.zoneId), None)
+    if not zone:
+        raise HTTPException(status_code=404, detail="Parking zone not found")
+
+    available_slots = zone.GetAvailableSlots()
+    if not available_slots:
+        raise HTTPException(status_code=400, detail="No available slots in this zone")
+
+    matched_slot = next(
+        (slot for slot in available_slots if slot.slotType.lower() == data.vehicleType.lower()),
+        None
+    )
+    selected_slot = matched_slot if matched_slot else available_slots[0]
+
+    vehicle = next((v for v in parkingManager.vehicles if v.licensePlate == data.licensePlate), None)
+    if not vehicle:
+        vehicle = parkingManager.RegisterVehicle(
+            vehicleId="",
+            licensePlate=data.licensePlate,
+            vehicleType=data.vehicleType,
+            ownerId="VISITOR",
+        )
+
+    ticket = TemporaryTicket(
+        ticketId=f"T{len(parkingManager.activeSessions) + len(parkingManager.vehicles)}",
+        licensePlate=data.licensePlate,
+        zoneId=zone.zoneId,
+        gateId=data.gateId,
+    )
+
+    barrier_opened = barrierService.openBarrier(data.gateId)
+    if not barrier_opened:
+        ticket.CancelTicket()
+        raise HTTPException(status_code=500, detail="Barrier open failed")
+
+    LogManager.LogEvent(
+        f"Temporary ticket {ticket.ticketId} issued for {data.licensePlate} at zone {zone.zoneId}"
+    )
+
+    return {
+        "message": "Temporary ticket issued successfully",
+        "ticket": ticket.GenerateRecord(),
+        "suggestedSlot": {
+            "slotId": selected_slot.slotId,
+            "slotType": selected_slot.slotType,
+            "zoneId": zone.zoneId,
+        },
+        "barrierOpened": True,
+    }
