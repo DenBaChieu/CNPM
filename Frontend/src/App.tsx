@@ -10,6 +10,7 @@ import Payment from "./pages/payment"
 import Ticket from "./pages/ticket"
 import Staff from "./pages/staff"
 import Entrance from "./pages/entrance"
+import Dashboard from "./pages/dashboard"
 import Exit from "./pages/exit"
 import Sensor from "./pages/sensor"
 import ProtectedRoute from "./ProtectedRoute"
@@ -31,6 +32,11 @@ export default function App() {
         <Route path="/createaccount" element={
             <ProtectedRoute>
               <CreateAccount />
+            </ProtectedRoute>
+        } />
+        <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
             </ProtectedRoute>
         } />
         <Route path="/registervehicle" element={

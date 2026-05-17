@@ -58,7 +58,6 @@ export default function Page() {
 
       <Link to="/createaccount">
         <button
-            onClick={startBillingPeriod}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
         >
           Tạo tài khoản
@@ -66,10 +65,16 @@ export default function Page() {
       </Link>
       <Link to="/registervehicle">
         <button
-            onClick={startBillingPeriod}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
         >
           Đăng ký xe
+        </button>
+      </Link>
+      <Link to="/dashboard">
+        <button
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
+        >
+          Dashboard
         </button>
       </Link>
     </div>
