@@ -1,0 +1,523 @@
+{
+  "led_boards": [
+    {
+      "ledID": "BOARD_MAIN_GATE",
+      "locationNode": "Cổng Chính (Vào)",
+      "x": 53,
+      "y": 95,
+      "routes": [
+        {
+          "arrow": "STRAIGHT",
+          "target_children": [
+            "BOARD_GARDEN_1",
+            "BOARD_GARDEN_2",
+            "BOARD_H1_H2_H3",
+            "BOARD_H4_H6",
+            "BOARD_SPORT",
+            "BOARD_MAIN_GATE_OUT"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_1",
+      "locationNode": "Vườn ươm ngõ 1",
+      "x": 56,
+      "y": 75,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS1-Slot1",
+            "CS1-Slot2",
+            "CS1-Slot3",
+            "CS1-Slot4",
+            "CS1-Slot5",
+            "CS1-Slot6",
+            "CS1-Slot7",
+            "CS1-Slot8",
+            "CS1-Slot9",
+            "CS1-Slot10",
+            "CS1-Slot11",
+            "CS1-Slot12",
+            "CS1-Slot13",
+            "CS1-Slot14",
+            "CS1-Slot15",
+            "CS1-Slot16",
+            "CS1-Slot17",
+            "CS1-Slot18",
+            "CS1-Slot19",
+            "CS1-Slot20",
+            "CS1-Slot21",
+            "CS1-Slot22",
+            "CS1-Slot23",
+            "CS1-Slot24",
+            "CS1-Slot25"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_2",
+      "locationNode": "Vườn ươm ngõ 2",
+      "x": 56,
+      "y": 60,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_children": [
+            "BOARD_GARDEN_A",
+            "BOARD_GARDEN_B",
+            "BOARD_GARDEN_C",
+            "BOARD_GARDEN_D"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_A",
+      "locationNode": "Vườn ươm khu A",
+      "x": 81,
+      "y": 60,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS1-Slot26",
+            "CS1-Slot27",
+            "CS1-Slot28",
+            "CS1-Slot29",
+            "CS1-Slot30",
+            "CS1-Slot31",
+            "CS1-Slot32",
+            "CS1-Slot33",
+            "CS1-Slot34",
+            "CS1-Slot35",
+            "CS1-Slot36",
+            "CS1-Slot37",
+            "CS1-Slot38",
+            "CS1-Slot39",
+            "CS1-Slot40",
+            "CS1-Slot41",
+            "CS1-Slot42",
+            "CS1-Slot43",
+            "CS1-Slot44",
+            "CS1-Slot45",
+            "CS1-Slot46",
+            "CS1-Slot47",
+            "CS1-Slot48",
+            "CS1-Slot49",
+            "CS1-Slot50"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_B",
+      "locationNode": "Vườn ươm khu B",
+      "x": 81,
+      "y": 55,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": [
+            "CS1-Slot51",
+            "CS1-Slot52",
+            "CS1-Slot53",
+            "CS1-Slot54",
+            "CS1-Slot55",
+            "CS1-Slot56",
+            "CS1-Slot57",
+            "CS1-Slot58",
+            "CS1-Slot59",
+            "CS1-Slot60",
+            "CS1-Slot61",
+            "CS1-Slot62",
+            "CS1-Slot63",
+            "CS1-Slot64",
+            "CS1-Slot65",
+            "CS1-Slot66",
+            "CS1-Slot67",
+            "CS1-Slot68",
+            "CS1-Slot69",
+            "CS1-Slot70",
+            "CS1-Slot71",
+            "CS1-Slot72",
+            "CS1-Slot73",
+            "CS1-Slot74",
+            "CS1-Slot75"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_C",
+      "locationNode": "Vườn ươm khu C",
+      "x": 94,
+      "y": 60,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS1-Slot76",
+            "CS1-Slot77",
+            "CS1-Slot78",
+            "CS1-Slot79",
+            "CS1-Slot80",
+            "CS1-Slot81",
+            "CS1-Slot82",
+            "CS1-Slot83",
+            "CS1-Slot84",
+            "CS1-Slot85",
+            "CS1-Slot86",
+            "CS1-Slot87",
+            "CS1-Slot88",
+            "CS1-Slot89",
+            "CS1-Slot90",
+            "CS1-Slot91",
+            "CS1-Slot92",
+            "CS1-Slot93",
+            "CS1-Slot94",
+            "CS1-Slot95",
+            "CS1-Slot96",
+            "CS1-Slot97",
+            "CS1-Slot98",
+            "CS1-Slot99",
+            "CS1-Slot100"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_GARDEN_D",
+      "locationNode": "Vườn ươm khu D",
+      "x": 94,
+      "y": 55,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": [
+            "CS1-Slot101",
+            "CS1-Slot102",
+            "CS1-Slot103",
+            "CS1-Slot104",
+            "CS1-Slot105",
+            "CS1-Slot106",
+            "CS1-Slot107",
+            "CS1-Slot108",
+            "CS1-Slot109",
+            "CS1-Slot110",
+            "CS1-Slot111",
+            "CS1-Slot112",
+            "CS1-Slot113",
+            "CS1-Slot114",
+            "CS1-Slot115",
+            "CS1-Slot116",
+            "CS1-Slot117",
+            "CS1-Slot118",
+            "CS1-Slot119",
+            "CS1-Slot120",
+            "CS1-Slot121",
+            "CS1-Slot122",
+            "CS1-Slot123",
+            "CS1-Slot124",
+            "CS1-Slot125"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_SPORT",
+      "locationNode": "Nhà Thể dục",
+      "x": 56,
+      "y": 45,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS1-Slot126",
+            "CS1-Slot127",
+            "CS1-Slot128",
+            "CS1-Slot129",
+            "CS1-Slot130",
+            "CS1-Slot131",
+            "CS1-Slot132",
+            "CS1-Slot133",
+            "CS1-Slot134",
+            "CS1-Slot135",
+            "CS1-Slot136",
+            "CS1-Slot137",
+            "CS1-Slot138",
+            "CS1-Slot139",
+            "CS1-Slot140",
+            "CS1-Slot141",
+            "CS1-Slot142",
+            "CS1-Slot143",
+            "CS1-Slot144",
+            "CS1-Slot145",
+            "CS1-Slot146",
+            "CS1-Slot147",
+            "CS1-Slot148",
+            "CS1-Slot149",
+            "CS2-Slot1"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H4_H6",
+      "locationNode": "H4, H6",
+      "x": 50,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_children": [
+            "BOARD_H4",
+            "BOARD_H6"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H1_H2_H3",
+      "locationNode": "H1, H2, H3",
+      "x": 50,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_children": [
+            "BOARD_H1",
+            "BOARD_H2",
+            "BOARD_H3"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H4",
+      "locationNode": "H4",
+      "x": 45,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": [
+            "CS2-Slot2",
+            "CS2-Slot3",
+            "CS2-Slot4",
+            "CS2-Slot5",
+            "CS2-Slot6",
+            "CS2-Slot7",
+            "CS2-Slot8",
+            "CS2-Slot9",
+            "CS2-Slot10",
+            "CS2-Slot11",
+            "CS2-Slot12",
+            "CS2-Slot13",
+            "CS2-Slot14",
+            "CS2-Slot15",
+            "CS2-Slot16",
+            "CS2-Slot17",
+            "CS2-Slot18",
+            "CS2-Slot19",
+            "CS2-Slot20",
+            "CS2-Slot21",
+            "CS2-Slot22",
+            "CS2-Slot23",
+            "CS2-Slot24",
+            "CS2-Slot25",
+            "CS2-Slot26"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H6",
+      "locationNode": "H6",
+      "x": 25,
+      "y": 59,
+      "routes": [
+        {
+          "arrow": "LEFT",
+          "target_slots": [
+            "CS2-Slot27",
+            "CS2-Slot28",
+            "CS2-Slot29",
+            "CS2-Slot30",
+            "CS2-Slot31",
+            "CS2-Slot32",
+            "CS2-Slot33",
+            "CS2-Slot34",
+            "CS2-Slot35",
+            "CS2-Slot36",
+            "CS2-Slot37",
+            "CS2-Slot38",
+            "CS2-Slot39",
+            "CS2-Slot40",
+            "CS2-Slot41",
+            "CS2-Slot42",
+            "CS2-Slot43",
+            "CS2-Slot44",
+            "CS2-Slot45",
+            "CS2-Slot46",
+            "CS2-Slot47",
+            "CS2-Slot48",
+            "CS2-Slot49",
+            "CS2-Slot50",
+            "CS2-Slot51"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H1",
+      "locationNode": "H1",
+      "x": 45,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS2-Slot52",
+            "CS2-Slot53",
+            "CS2-Slot54",
+            "CS2-Slot55",
+            "CS2-Slot56",
+            "CS2-Slot57",
+            "CS2-Slot58",
+            "CS2-Slot59",
+            "CS2-Slot60",
+            "CS2-Slot61",
+            "CS2-Slot62",
+            "CS2-Slot63",
+            "CS2-Slot64",
+            "CS2-Slot65",
+            "CS2-Slot66",
+            "CS2-Slot67",
+            "CS2-Slot68",
+            "CS2-Slot69",
+            "CS2-Slot70",
+            "CS2-Slot71",
+            "CS2-Slot72",
+            "CS2-Slot73",
+            "CS2-Slot74",
+            "CS2-Slot75",
+            "CS2-Slot76"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H2",
+      "locationNode": "H2",
+      "x": 30,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS2-Slot77",
+            "CS2-Slot78",
+            "CS2-Slot79",
+            "CS2-Slot80",
+            "CS2-Slot81",
+            "CS2-Slot82",
+            "CS2-Slot83",
+            "CS2-Slot84",
+            "CS2-Slot85",
+            "CS2-Slot86",
+            "CS2-Slot87",
+            "CS2-Slot88",
+            "CS2-Slot89",
+            "CS2-Slot90",
+            "CS2-Slot91",
+            "CS2-Slot92",
+            "CS2-Slot93",
+            "CS2-Slot94",
+            "CS2-Slot95",
+            "CS2-Slot96",
+            "CS2-Slot97",
+            "CS2-Slot98",
+            "CS2-Slot99",
+            "CS2-Slot100",
+            "CS2-Slot101"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_H3",
+      "locationNode": "H3",
+      "x": 20,
+      "y": 51,
+      "routes": [
+        {
+          "arrow": "RIGHT",
+          "target_slots": [
+            "CS2-Slot102",
+            "CS2-Slot103",
+            "CS2-Slot104",
+            "CS2-Slot105",
+            "CS2-Slot106",
+            "CS2-Slot107",
+            "CS2-Slot108",
+            "CS2-Slot109",
+            "CS2-Slot110",
+            "CS2-Slot111",
+            "CS2-Slot112",
+            "CS2-Slot113",
+            "CS2-Slot114",
+            "CS2-Slot115",
+            "CS2-Slot116",
+            "CS2-Slot117",
+            "CS2-Slot118",
+            "CS2-Slot119",
+            "CS2-Slot120",
+            "CS2-Slot121",
+            "CS2-Slot122",
+            "CS2-Slot123",
+            "CS2-Slot124",
+            "CS2-Slot125",
+            "CS2-Slot126",
+            "CS2-Slot127",
+            "CS2-Slot128",
+            "CS2-Slot129",
+            "CS2-Slot130",
+            "CS2-Slot131",
+            "CS2-Slot132",
+            "CS2-Slot133",
+            "CS2-Slot134",
+            "CS2-Slot135",
+            "CS2-Slot136",
+            "CS2-Slot137",
+            "CS2-Slot138",
+            "CS2-Slot139",
+            "CS2-Slot140",
+            "CS2-Slot141",
+            "CS2-Slot142",
+            "CS2-Slot143",
+            "CS2-Slot144",
+            "CS2-Slot145",
+            "CS2-Slot146",
+            "CS2-Slot147",
+            "CS2-Slot148",
+            "CS2-Slot149"
+          ]
+        }
+      ]
+    },
+    {
+      "ledID": "BOARD_MAIN_GATE_OUT",
+      "locationNode": "Cổng Chính (Ra)",
+      "x": 53,
+      "y": 10,
+      "routes": [
+        {
+          "arrow": "STRAIGHT"
+        }
+      ]
+    }
+  ]
+}
