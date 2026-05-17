@@ -9,7 +9,6 @@ class ParkingManager:
     activeSessions: list[ParkingSession] = []
     managedZones: list[ParkingZone] = []
     parkingPolicy = None
-    monitoring = False
 
     def __init__(self):
         self.activeSessions = []
@@ -21,14 +20,6 @@ class ParkingManager:
             if zone.zoneId == zoneId:
                 return zone
         return None
-
-    def StartMonitor(self):
-        self.monitoring = True
-        LogManager.LogEvent("Parking monitoring started")
-
-    def StopMonitor(self):
-        self.monitoring = False
-        LogManager.LogEvent("Parking monitoring stopped")
 
     def GetZoneFromSlot(self, slot: ParkingSlot) -> ParkingZone:
         for zone in self.managedZones:

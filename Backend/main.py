@@ -203,6 +203,7 @@ def StudentEnter(data: dict):
     vehicle = GetVehicle(licensePlate)
 
     zone.UserEntered(user, vehicle)
+    LogManager.LogEvent(f"Student {studentId} entered zone {zoneId} with license plate {licensePlate}")
 
 @app.post("/sensor/exit")
 def Exit(data: dict):
@@ -221,7 +222,9 @@ def Exit(data: dict):
             if ticket.licensePlate == licensePlate:
                 ticket.CloseTicket()
                 parkingTicket = ticket
-                break 
+                break
+
+        LogManager.LogEvent(f"Vehicle {licensePlate} left zone {zoneId}")
 
         if parkingTicket:
             return {"message": "Success", "ticket": ticket.GenerateRecord()}

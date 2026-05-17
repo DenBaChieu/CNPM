@@ -52,8 +52,6 @@ class ParkingSession:
         finally:
             conn.close()
 
-        LogManager.LogEvent(f"Parking session {self.sessionId} started")
-
     def GetTotalTime(self):
         if self.sessionStatus == "Active":
             return (datetime.now() - self.entryTime).total_seconds() / 3600
@@ -69,7 +67,6 @@ class ParkingSession:
                        (self.exitTime.isoformat(), self.sessionStatus, self.sessionId))
         conn.commit()
         conn.close()
-        LogManager.LogEvent(f"Parking session {self.sessionId} closed")
 
     def GenerateRecord(self):
         return {

@@ -72,7 +72,16 @@ class LogManager:
 
         conn.close()
 
-        return results
+        formatted = []
+
+        for row in results:
+            formatted.append({
+                "id": row[0],
+                "event": row[1],
+                "timestamp": row[2]
+            })
+
+        return formatted
 
     @staticmethod
     def ExportLogs(format: str):

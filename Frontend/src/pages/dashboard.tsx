@@ -37,6 +37,7 @@ export default function LogPage() {
             const data = await response.json();
 
             if (response.ok) {
+                console.log(data)
                 setLogs(data);
             } else {
                 setErrorMessage(data.detail || "Tìm kiếm thất bại");
