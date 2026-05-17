@@ -1,4 +1,5 @@
 from datetime import datetime
+from LogManager import *
 
 class Sensor:
     sensorId: str
@@ -31,11 +32,13 @@ class Sensor:
             self.lastUpdatedTime = datetime.now()
 
     def ReportFailure(self):
+        LogManager.LogEvent(f"Sensor {self.sensorId} has a failure")
         self.connectionStatus = "Inactive"
         self.occupancyStatus = "Vacant"
         self.lastUpdatedTime = datetime.now()
 
     def Reconnect(self):
+        LogManager.LogEvent(f"Sensor {self.sensorId} is back online")
         self.connectionStatus = "Active"
         self.occupancyStatus = "Vacant"
         self.lastUpdatedTime = datetime.now()

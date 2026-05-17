@@ -37,32 +37,13 @@ class Admin(User):
         super().__init__(userId, fullName, role, email, phoneNumber)
         self.adminLevel = adminLevel
         self.managedAreas = managedAreas
-
-    def CreateUser():
-        pass
-
-    def DeleteUser():
-        pass
-
-    def UpdateUser():
-        pass
-
-    def ViewLogs():
-        pass
-
-    def GenerateReport():
-        pass
     
 class Visitor(User):
-    def RequestTicket():
-        pass
+    pass
 
 class Staff(User):
     def WriteLog(event: str):
         LogManager.LogEvent(event)
-
-    def CreateTicket():
-        pass
 
 class Student(User):
     accumulatedFees: float
@@ -86,6 +67,8 @@ def CreateAccount(userId: int, fullName: str, role: str, email: str, phoneNumber
         cursor.execute("INSERT INTO student (userId, accumulatedFees) VALUES (?, ?)", (userId, 0.0))
     elif role == "Admin":
         cursor.execute("INSERT INTO admin (userId, adminLevel, managedAreas) VALUES (?, ?, ?)", (userId, 1, ""))
+
+    LogManager.LogEvent(f"Account for {fullName} created")
 
     conn.commit()
     conn.close()

@@ -32,6 +32,7 @@ SetupUserSystem()
 SetupParkingSessionDB()
 SetupVehicleDB()
 SetupBillingDB()
+LogManager.SetupDB()
 try:
     CreateAccount(0, "Admin", "Admin", "", "")
 except Exception as e:
@@ -296,6 +297,14 @@ def CreateAccountAPI(data: CreateVehicleData, authorization: str = Header()):
     RegisterVehicle(data.licensePlate, data.vehicleType, data.ownerId)
 
     return {"message": "Register successful"}
+
+@app.get("/logs/search")
+def search_logs(keyword: str = ""):
+    return LogManager.SearchLogs(Filter(keyword=keyword))
+
+@app.post("/logs/export")
+def export_logs(data: dict):
+    return {"message": LogManager.ExportLogs(data["format"])}
 
 #---------- TemporaryTicket ----------#
 @app.post("/visitor/requestTempTicket")

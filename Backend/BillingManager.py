@@ -71,6 +71,7 @@ def DailyCheck():
         cursor.execute("UPDATE payment SET status = 'Overdue' WHERE paymentId = ?", (payment[0],))
         ApplyOverduePolicy(payment[0])
         NotifyUser(payment[1], f"Your payment with id {payment[0]} is overdue. Please make the payment as soon as possible.")
+        LogManager.LogEvent(f"Payment {payment[0]} is overdue")
     conn.commit()
     conn.close()
 
@@ -141,6 +142,7 @@ def StartBillingPeriod():
     """, (datetime.now().isoformat(),))
     conn.commit()
     conn.close()
+    LogManager.LogEvent(f"Billing period started")
 
 def StopBillingPeriod():
     paymentConn = sqlite3.connect("../Database/Billing.db")
@@ -254,6 +256,7 @@ def StopBillingPeriod():
     conn.close()
     paymentConn.commit()
     paymentConn.close()
+    LogManager.LogEvent(f"Billing period ended")
 
 #Function for when BKPay sends a callback to notify that the payment is successful
 def VerifyPayment(paymentId: str):
@@ -262,6 +265,8 @@ def VerifyPayment(paymentId: str):
     cursor.execute("UPDATE payment SET status = 'Paid', paymentDate = ? WHERE paymentId = ?", (datetime.now().isoformat(), paymentId,))
     conn.commit()
     conn.close()
+
+    LogManager.LogEvent(f"Payment {paymentId} has been paid")
 
 #Function for when staff collected the payment from the visitor
 def VerifyTicketPayment(ticketId: str):
@@ -276,10 +281,12 @@ def VerifyTicketPayment(ticketId: str):
 
     conn.commit()
     conn.close()
-
+    
+    LogManager.LogEvent(f"Ticket {ticketId} has been paid")
 
 #Function for when BKPay sends a callback to notify that the payment has failed
 def HandlePaymentFailure(paymentId: str):
+    LogManager.LogEvent(f"Payment {paymentId} has failed")
     NotifyUser(paymentId, f"Your payment with id {paymentId} has failed. Please try again.")
 
 def SaveTicket(ticket: Ticket):
@@ -328,6 +335,8 @@ class Ticket:
         self.zoneId = zoneId
         self.licensePlate = licensePlate
         self.amount = 0.0
+        
+        LogManager.LogEvent(f"Ticket {self.ticketId} has been created")
 
     def CloseTicket(self):
         conn = sqlite3.connect("../Database/ParkingSession.db")
@@ -373,7 +382,7 @@ class Ticket:
         conn.commit()
         conn.close()
 
-        return self.amount
+        LogManager.LogEvent(f"Ticket {self.ticketId} has been closed")
 
     def UpdateStatus(self, newStatus: str):
         self.status = newStatus
