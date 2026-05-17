@@ -19,6 +19,10 @@ Python:
 - pydantic
 - uvicorn
 
+React:
+
+- qrcode.react
+
 ## Frontend Setup
 
 1. Tạo 1 terminal mới.
@@ -40,3 +44,4 @@ Python:
 - Tài khoản admin dùng để kiểm thử:
     - id: 0
     - password: Admin
+- User ID 1000 là cho khách vãng lai

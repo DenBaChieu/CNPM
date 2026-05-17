@@ -57,6 +57,8 @@ def AuthorizeAccess(sessionId: str, action: str) -> bool:
     user: User = currentSessions.get(sessionId)["user"]
     if user.role == "Admin":
         return True
+    elif action == "GetPaymentInfo":
+        return True
     else:
         return True
 
@@ -94,4 +96,6 @@ def TerminateUserSession(sessionId: str):
     del currentSessions[sessionId]
 
 def GetUserIdFromSession(sessionId: str):
-    pass
+    if currentSessions[sessionId] is None:
+        return None
+    return currentSessions[sessionId]["user"].userId

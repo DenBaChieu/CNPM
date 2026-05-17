@@ -1,18 +1,17 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 from AuthManager import *
 from BillingManager import *
 from ParkingManager import ParkingManager
 from ParkingZone import ParkingZone
 from LogManager import LogManager
-from ParkingSession import SetupParkingSessionDB
+from ParkingSession import *
 from User import *
-from Vehicle import Vehicle
+from Vehicle import *
 from ParkingSlot import ParkingSlot
 from Sensor import Sensor
-from TemporaryTicket import TemporaryTicket
+from TemporaryTicket import *
 from BarrierService import BarrierService
 
 import uvicorn
@@ -27,11 +26,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-billingManager = BillingManager()
 SetupAuthSystem()
 SetupUserSystem()
 SetupParkingSessionDB()
-SetupBillingDB(billingManager)
+SetupVehicleDB()
+SetupBillingDB()
 try:
     CreateAccount(0, "Admin", "Admin", "", "")
 except Exception as e:
@@ -46,21 +45,15 @@ except Exception as e:
 parkingManager = ParkingManager()
 barrierService = BarrierService()
 
-
-class TempTicketRequest(BaseModel):
-    zoneId: str
-    licensePlate: str
-    vehicleType: str = "Unknown"
-    gateId: str = "Gate-1"
-
 parkingSlots = []
 parkingSensors = []
-for zoneName in ["CS1", "CS2"]:
+zones = ["CS1", "CS2"]
+for zoneName in zones:
     slots = []
-    for i in range(1, 150):
+    for i in range(1, 151):
         sensor = Sensor(sensorId=f"{zoneName}-Sensor{i}")
-        slotType = "Car" if i % 2 == 0 else "Motorcycle"
-        slot = ParkingSlot(slotId=f"{zoneName}-Slot{i}", slotType=slotType, sensor=sensor, GetVehicle=parkingManager.GetVehicle, StartParkingSession=parkingManager.StartParkingSession, StopParkingSession=parkingManager.StopParkingSession)
+        slotType = "Car" if i > 100 else "Motorcycle"
+        slot = ParkingSlot(slotId=f"{zoneName}-Slot{i}", slotType=slotType, sensor=sensor, StartParkingSession=parkingManager.StartParkingSession, StopParkingSession=parkingManager.StopParkingSession)
         slots.append(slot)
         parkingSlots.append(slot)
         parkingSensors.append(sensor)
@@ -69,6 +62,39 @@ for zoneName in ["CS1", "CS2"]:
     parkingManager.managedZones.append(zone)
 
 print("Parking zones and slots initialized")
+
+#---------- Payment ----------#
+@app.get("/payment/getInfo")
+def GetInfo(authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "GetPaymentInfo"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    userId = GetUserIdFromSession(authorization.replace("Bearer ", ""))
+    if userId is not None:
+        print(GetPayments(userId=userId))
+        return GetPayments(userId=userId)
+    else:
+        raise HTTPException(status_code=403, detail="No user ID found")
+    
+@app.post("/payment/startBillingPeriod")
+def StartBillingPeriodAPI(authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "StartBillingPeriod"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    StartBillingPeriod()
+    return {"message": "Successful"}
+    
+@app.post("/payment/stopBillingPeriod")
+def StopBillingPeriodAPI(authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "StopBillingPeriod"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    StopBillingPeriod()
+    return {"message": "Successful"}
+
+@app.post("/payment/pay")
+def Pay(data: PayRequest, authorization: str = Header()):
+    VerifyPayment(data.paymentId)
 
 #---------- Authentication ----------#
 @app.post("/login")
@@ -100,7 +126,7 @@ def ValidateUserSession(authorization: str = Header(None)):
     if ValidateSession(token):
         return {"message": "Session is valid"}
     else:
-        return {"message": "Invalid session"}, 401
+        raise HTTPException(status_code=401, detail="Invalid session")
 
 #---------- Sensors ----------#
 @app.post("/sensor/detect")
@@ -109,10 +135,15 @@ def UpdateSensor(input: dict):
     licensePlate = input.get("licensePlate")
     sensor = next((s for s in parkingSensors if s.sensorId == sensorId), None)
     if sensor:
+        if licensePlate:
+            user, vehicle = parkingManager.GetZoneFromSensor(sensor=sensor).GetUserAndVehicleInZone(licensePlate)
+            if user is None or vehicle is None:
+                raise HTTPException(status_code=404, detail="Entry not found")
+
         sensor.DetectVehicle(licensePlate)
         return {"message": "Sensor updated"}
     else:
-        return {"message": "Sensor not found"}, 404
+        raise HTTPException(status_code=404, detail="Sensor not found")
     
 @app.post("/sensor/failure")
 def ReportSensorFailure(sensorId: str):
@@ -121,7 +152,7 @@ def ReportSensorFailure(sensorId: str):
         sensor.ReportFailure()
         return {"message": "Sensor reported as failed"}
     else:
-        return {"message": "Sensor not found"}, 404
+        raise HTTPException(status_code=404, detail="Sensor not found")
     
 @app.post("/sensor/reconnect")
 def ReconnectSensor(sensorId: str):
@@ -130,7 +161,7 @@ def ReconnectSensor(sensorId: str):
         sensor.Reconnect()
         return {"message": "Sensor reconnected"}
     else:
-        return {"message": "Sensor not found"}, 404
+        raise HTTPException(status_code=404, detail="Sensor not found")
 
 @app.get("/parking/getAvailableSlots")
 def GetAvailableSlots(zoneId: str):
@@ -139,9 +170,47 @@ def GetAvailableSlots(zoneId: str):
         availableSlots = zone.GetAvailableSlots()
         return {"availableSlots": [slot.slotId for slot in availableSlots]}
     else:
-        return {"message": "Parking zone not found"}, 404
+        raise HTTPException(status_code=404, detail="Parking zone not found")
 
+@app.post("/sensor/studentEnter")
+def StudentEnter(input: dict):
+    studentId = int(input.get("id"))
+    licensePlate = input.get("licensePlate")
+    zoneId = input.get("zoneId")
+    if studentId is None or licensePlate is None or zoneId is None or license == "":
+        raise HTTPException(status_code=400, detail="Missing data")
+    
+    user = GetUserFromId(studentId)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    zone = parkingManager.GetZone(zoneId)
+    if zone is None:
+        raise HTTPException(status_code=404, detail="Zone not found")
+
+    vehicle = GetVehicle(licensePlate)
+
+    zone.UserEntered(user, vehicle)
+
+@app.post("/sensor/exit")
+def Exit(input: dict):
+    licensePlate = input.get("licensePlate")
+    zoneId = input.get("zoneId")
+    if licensePlate is None or zoneId is None:
+        raise HTTPException(status_code=400, detail="Missing data")
+    
+    zone = parkingManager.GetZone(zoneId)
+    if zone is None:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    
+    if zone.VehicleLeft(licensePlate=licensePlate):
+        return {"message": "Success"}
+    else:
+        raise HTTPException(status_code=404, detail="Vehicle entry not found")
+    
 #---------- Admin ----------#
+
+#Admin creates all accounts including students and staffs
 @app.post("/createaccount")
 def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
     if not AuthorizeAccess(authorization.replace("Bearer ", ""), "CreateAccount"):
@@ -164,8 +233,15 @@ def CreateAccountAPI(data: CreateAccountData, authorization: str = Header()):
 
     return {"message": "Signup successful"}
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+#Admin creates all registered vehicles
+@app.post("/registerVehicle")
+def CreateAccountAPI(data: CreateVehicleData, authorization: str = Header()):
+    if not AuthorizeAccess(authorization.replace("Bearer ", ""), "CreateVehicle"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    RegisterVehicle(data.licensePlate, data.vehicleType, data.ownerId)
+
+    return {"message": "Register successful"}
 
 #---------- TemporaryTicket ----------#
 @app.post("/visitor/requestTempTicket")
@@ -186,8 +262,7 @@ def RequestTempTicket(data: TempTicketRequest):
 
     vehicle = next((v for v in parkingManager.vehicles if v.licensePlate == data.licensePlate), None)
     if not vehicle:
-        vehicle = parkingManager.RegisterVehicle(
-            vehicleId="",
+        vehicle = RegisterVehicle(
             licensePlate=data.licensePlate,
             vehicleType=data.vehicleType,
             ownerId="VISITOR",
@@ -219,3 +294,6 @@ def RequestTempTicket(data: TempTicketRequest):
         },
         "barrierOpened": True,
     }
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

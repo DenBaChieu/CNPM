@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 class Sensor:
     sensorId: str
@@ -12,7 +12,7 @@ class Sensor:
         self.sensorId = sensorId
         self.occupancyStatus = "Vacant"
         self.connectionStatus = "Active"
-        self.lastUpdatedTime = datetime.datetime.now()
+        self.lastUpdatedTime = datetime.now()
 
     def DetectVehicle(self, licensePlate: str):
         if self.connectionStatus == "Inactive":
@@ -23,19 +23,19 @@ class Sensor:
             if self.occupancyStatus == "Vacant":
                 self.AssignVehicle(licensePlate)
             self.occupancyStatus = "Occupied"
-            self.lastUpdatedTime = datetime.datetime.now()
+            self.lastUpdatedTime = datetime.now()
         else:
             if self.occupancyStatus == "Occupied":
                 self.ReleaseSlot()
             self.occupancyStatus = "Vacant"
-            self.lastUpdatedTime = datetime.datetime.now()
+            self.lastUpdatedTime = datetime.now()
 
     def ReportFailure(self):
         self.connectionStatus = "Inactive"
         self.occupancyStatus = "Vacant"
-        self.lastUpdatedTime = datetime.datetime.now()
+        self.lastUpdatedTime = datetime.now()
 
     def Reconnect(self):
         self.connectionStatus = "Active"
         self.occupancyStatus = "Vacant"
-        self.lastUpdatedTime = datetime.datetime.now()
+        self.lastUpdatedTime = datetime.now()

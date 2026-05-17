@@ -4,29 +4,23 @@ import "../index.css";
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
 export default function CreateAccount() {
-  const [userId, setUserId] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
+  const [ownerId, setOwnerId] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [licensePlate, setLicensePlate] = useState("");
 
   const handleCreateAccount = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(backendURL + "/createaccount", {
+      const response = await fetch(backendURL + "/registerVehicle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId,
-          fullName,
-          role,
-          email,
-          phoneNumber,
-          password,
+          licensePlate: licensePlate,
+          vehicleType: vehicleType,
+          ownerId: ownerId,
         }),
       });
 
@@ -46,55 +40,31 @@ export default function CreateAccount() {
   return (
     <div className="flex flex-col gap-4 max-w-sm mx-auto min-h-screen justify-center">
       <h1 className="text-3xl font-bold text-center mb-4 text-white">
-        Tạo tài khoản
+        Tạo phương tiện
       </h1>
+
+      <input
+        type="text"
+        placeholder="Biển số xe"
+        className="border rounded-lg px-4 py-2 bg-white"
+        value={licensePlate}
+        onChange={(e) => setLicensePlate(e.target.value)}
+      />
+
+      <input
+        type="text"
+        placeholder="Loại phương tiện"
+        className="border rounded-lg px-4 py-2 bg-white"
+        value={vehicleType}
+        onChange={(e) => setVehicleType(e.target.value)}
+      />
 
       <input
         type="text"
         placeholder="MSSV"
         className="border rounded-lg px-4 py-2 bg-white"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Họ và tên"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Vai trò"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-      />
-
-      <input
-        type="email"
-        placeholder="Email"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Số điện thoại"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Mật khẩu"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={ownerId}
+        onChange={(e) => setOwnerId(e.target.value)}
       />
 
       <button

@@ -6,35 +6,32 @@ class ParkingSlot:
     slotStatus: str # Occupied, Vacant
     slotType: str # Motorcycle, Car
     status: str # Available, Unavailable
-    currentVehicle: Vehicle
+    currentVehicleLicense: str
     sensor: Sensor
-    GetVehicle = None
     StopParkingSession = None
     StartParkingSession = None
 
-    def __init__(self, slotId: str, slotType: str, sensor: Sensor, GetVehicle, StartParkingSession, StopParkingSession):
+    def __init__(self, slotId: str, slotType: str, sensor: Sensor, StartParkingSession, StopParkingSession):
         self.slotId = slotId
         self.slotType = slotType
         self.sensor = sensor
         self.slotStatus = "Vacant"
-        self.currentVehicle = None
+        self.currentVehicleLicense = None
         self.sensor.AssignVehicle = self.AssignVehicle
         self.sensor.ReleaseSlot = self.ReleaseSlot
-        self.GetVehicle = GetVehicle
         self.StartParkingSession = StartParkingSession
         self.StopParkingSession = StopParkingSession
 
     def ReleaseSlot(self):
-        if self.currentVehicle:
-            self.StopParkingSession(self.currentVehicle, self)
-        self.currentVehicle = None
+        if self.currentVehicleLicense:
+            self.StopParkingSession(self.currentVehicleLicense, self)
+        self.currentVehicleLicense = None
         self.slotStatus = "Vacant"
 
     def AssignVehicle(self, licensePlate: str):
-        vehicle = self.GetVehicle(licensePlate)
-        self.currentVehicle = vehicle
+        self.currentVehicleLicense = licensePlate
         self.slotStatus = "Occupied"
-        self.StartParkingSession(vehicle, self)
+        self.StartParkingSession(licensePlate, self)
 
     def UpdateStatus(self, nextStatus: str):
         self.status = nextStatus

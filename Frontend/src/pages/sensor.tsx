@@ -5,11 +5,15 @@ const backendURL = import.meta.env.VITE_BACKEND_URL;
 export default function Page() {
   const [sensorId, setSensorId] = useState("");
   const [licensePlate, setLicensePlate] = useState("");
-  const [zoneId, setZoneId] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSensorDetect = async () => {
+    setErrorMessage("")
+    setMessage("")
+
     try {
-      fetch(backendURL + "/sensor/detect", {
+      const response = await fetch(backendURL + "/sensor/detect", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -19,39 +23,35 @@ export default function Page() {
           "licensePlate": licensePlate,
         }),
       });
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const handleSlot = async () => {
-    try {
-      
-      const response = await fetch(
-        `${backendURL}/parking/getAvailableSlots?zoneId=${zoneId}`,
-        {
-          method: "GET",
-        }
-      );
 
       const data = await response.json();
 
       if (response.ok) {
-        const permission = await Notification.requestPermission();
-
-        if (permission === "granted") {
-            new Notification("Available slots:", {
-                body: data.availableSlots.length,
-            });
+        if (licensePlate == "") {
+            window.location.href = "/exit";
         }
+        setMessage("Success");
+      } else {
+        setErrorMessage(data.detail || "Failed");
       }
     } catch (error) {
       console.error("Error:", error);
+      setErrorMessage("Unable to connect to server");
     }
   };
 
    return (
     <div className="flex flex-col gap-4 max-w-sm mx-auto min-h-screen justify-center">
+        {errorMessage && (
+            <p className="text-red-500 text-center text-sm">
+                {errorMessage}
+            </p>
+        )}
+        {message && (
+            <p className="text-white text-center text-sm">
+                {message}
+            </p>
+        )}
       <input
         type="text"
         placeholder="Sensor ID"
@@ -73,20 +73,6 @@ export default function Page() {
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
         Send sensor data
-      </button>
-
-      <input
-        type="text"
-        placeholder="Zone ID"
-        className="border rounded-lg px-4 py-2 bg-white"
-        value={zoneId}
-        onChange={(e) => setZoneId(e.target.value)}
-      />
-      <button
-        onClick={handleSlot}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
-      >
-        Get number of slots left
       </button>
     </div>
   );

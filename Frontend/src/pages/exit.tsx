@@ -1,44 +1,40 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import "../index.css";
 
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Login() {
-  const [id, setId] = useState("");
-  const [password, setPassword] = useState("");
+  const [zoneId, setZoneId] = useState("");
+  const [licensePlate, setLicensePlate] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = async () => {
+  const handle = async () => {
     setErrorMessage("");
 
     try {
-      const response = await fetch(backendURL + "/login", {
+      const response = await fetch(backendURL + "/sensor/exit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id,
-          password,
+          zoneId: zoneId,
+          licensePlate: licensePlate
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        console.log("Login success:", data);
-        localStorage.setItem("token", data.token);
-        if (data.role == "Admin") {
-          window.location.href = "/admin";
-        } else if (data.role == "Staff") {
-          window.location.href = "/staff";
+        console.log("Success:", data);
+        if (data.ticket) {
+          window.location.href = "/ticket"
         } else {
-          window.location.href = "/";
+          window.location.href = "/entrance"
         }
       } else {
-        console.log("Login failed:", data);
-        setErrorMessage(data.detail || "Login failed");
+        console.log("Failed:", data);
+        setErrorMessage(data.detail || "Failed");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -49,7 +45,7 @@ export default function Login() {
   return (
     <div className="flex flex-col gap-4 max-w-sm mx-auto min-h-screen justify-center">
       <h1 className="text-3xl font-bold text-center mb-4 text-white">
-        Đăng nhập
+        Cổng ra
       </h1>
 
       {errorMessage && (
@@ -60,34 +56,26 @@ export default function Login() {
 
       <input
         type="text"
-        placeholder="MSSV"
+        placeholder="Cơ sở (CS1/CS2)"
         className="border rounded-lg px-4 py-2 bg-white"
-        value={id}
-        onChange={(e) => setId(e.target.value)}
+        value={zoneId}
+        onChange={(e) => setZoneId(e.target.value)}
       />
 
       <input
-        type="password"
-        placeholder="Mật khẩu"
+        type="text"
+        placeholder="Biển số xe (IoT tự quét)"
         className="border rounded-lg px-4 py-2 bg-white"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={licensePlate}
+        onChange={(e) => setLicensePlate(e.target.value)}
       />
 
       <button
-        onClick={handleLogin}
+        onClick={handle}
         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
       >
-        Đăng nhập
+        Ra cổng
       </button>
-
-      <Link to="/entrance">
-        <button
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg w-sm"
-        >
-          Vào cổng
-        </button>
-      </Link>
     </div>
   );
 }
